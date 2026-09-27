@@ -2,6 +2,8 @@
 
 Research starter for an evidence-aware Payment Integration Assurance Score (PIAS), version 0.1. Draft methodology; not a PCI assessment, validated probability of compromise, or merchant ranking.
 
+[Open the private research dashboard](https://payment-integration-research-lab.rohan-ss-sangal.chatgpt.site) · [GitHub repository](https://github.com/rohansangal1/payment-integration-lab)
+
 ## What is implemented
 - Interactive dashboard with synthetic examples, evidence inspection, score sandbox, architecture comparison, literature and protocol.
 - Shared deterministic score engine and regression tests.
