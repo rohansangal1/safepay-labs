@@ -13,3 +13,4 @@ jobs:
       - run: npm test
       - run: npm run dataset
       - run: npm run demo
+      - run: npm run assess

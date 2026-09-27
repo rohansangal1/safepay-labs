@@ -1,0 +1,1521 @@
+{
+  "kind": "lab-run",
+  "target": "owned reference checkout (local, fake provider)",
+  "metric_version": "0.1",
+  "note": "Controls without checks are left unknown. These are lab fixtures, not merchant assessments.",
+  "runs": [
+    {
+      "id": "LAB-0",
+      "label": "Baseline",
+      "defects": [],
+      "results": {
+        "amount": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:amount:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "client-price-ignored",
+              "description": "Order total comes from the catalog, not a client-sent price",
+              "expected": 5000,
+              "observed": 5000,
+              "pass": true
+            },
+            {
+              "id": "underpaid-event-rejected",
+              "description": "A success event for less than the order total does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "currency-mismatch-rejected",
+              "description": "A success event in another currency does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "binding": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:binding:2/2-checks-passed",
+          "checks": [
+            {
+              "id": "cross-order-event-rejected",
+              "description": "Paying for a cheap order cannot fulfill an expensive one",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-order-rejected",
+              "description": "An event naming a nonexistent order fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authenticity": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authenticity:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "unsigned-rejected",
+              "description": "An unsigned event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "wrong-secret-rejected",
+              "description": "An event signed with another key does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "stale-timestamp-rejected",
+              "description": "A correctly signed event from an hour ago does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "tampered-body-rejected",
+              "description": "Changing a signed body invalidates it",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "fulfillment": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:fulfillment:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "verified-success-fulfills",
+              "description": "A valid signed success event fulfills the order exactly once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "failed-payment-not-fulfilled",
+              "description": "A payment.failed event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "pending-payment-not-fulfilled",
+              "description": "A payment.processing event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-payment-ignored",
+              "description": "An event for a payment the merchant never created fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authorization": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authorization:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "other-customer-cannot-read",
+              "description": "Another customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "other-customer-cannot-pay",
+              "description": "Another customer cannot start payment for the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "anonymous-cannot-read",
+              "description": "A request with no customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            }
+          ]
+        },
+        "idempotency": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:idempotency:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "duplicate-delivery",
+              "description": "The same event delivered twice fulfills once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "distinct-events-same-payment",
+              "description": "Two success events for one payment fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "concurrent-delivery",
+              "description": "Five concurrent deliveries of one event fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            }
+          ]
+        }
+      },
+      "score": {
+        "lower": 65,
+        "upper": 100,
+        "observed": 100,
+        "coverage": 65,
+        "gate": "insufficient-evidence",
+        "criticalFailures": [],
+        "criticalUnknown": []
+      }
+    },
+    {
+      "id": "LAB-1",
+      "label": "Seeded: trustClientAmount",
+      "defects": [
+        "trustClientAmount"
+      ],
+      "description": "Uses the price sent by the client instead of the catalog",
+      "results": {
+        "amount": {
+          "status": "fail",
+          "evidence": "lab:owned-checkout:amount:2/3-checks-passed",
+          "checks": [
+            {
+              "id": "client-price-ignored",
+              "description": "Order total comes from the catalog, not a client-sent price",
+              "expected": 5000,
+              "observed": 2,
+              "pass": false
+            },
+            {
+              "id": "underpaid-event-rejected",
+              "description": "A success event for less than the order total does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "currency-mismatch-rejected",
+              "description": "A success event in another currency does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "binding": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:binding:2/2-checks-passed",
+          "checks": [
+            {
+              "id": "cross-order-event-rejected",
+              "description": "Paying for a cheap order cannot fulfill an expensive one",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-order-rejected",
+              "description": "An event naming a nonexistent order fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authenticity": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authenticity:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "unsigned-rejected",
+              "description": "An unsigned event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "wrong-secret-rejected",
+              "description": "An event signed with another key does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "stale-timestamp-rejected",
+              "description": "A correctly signed event from an hour ago does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "tampered-body-rejected",
+              "description": "Changing a signed body invalidates it",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "fulfillment": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:fulfillment:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "verified-success-fulfills",
+              "description": "A valid signed success event fulfills the order exactly once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "failed-payment-not-fulfilled",
+              "description": "A payment.failed event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "pending-payment-not-fulfilled",
+              "description": "A payment.processing event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-payment-ignored",
+              "description": "An event for a payment the merchant never created fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authorization": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authorization:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "other-customer-cannot-read",
+              "description": "Another customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "other-customer-cannot-pay",
+              "description": "Another customer cannot start payment for the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "anonymous-cannot-read",
+              "description": "A request with no customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            }
+          ]
+        },
+        "idempotency": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:idempotency:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "duplicate-delivery",
+              "description": "The same event delivered twice fulfills once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "distinct-events-same-payment",
+              "description": "Two success events for one payment fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "concurrent-delivery",
+              "description": "Five concurrent deliveries of one event fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            }
+          ]
+        }
+      },
+      "score": {
+        "lower": 50,
+        "upper": 85,
+        "observed": 76.92307692307692,
+        "coverage": 65,
+        "gate": "critical-failure",
+        "criticalFailures": [
+          "amount"
+        ],
+        "criticalUnknown": []
+      }
+    },
+    {
+      "id": "LAB-2",
+      "label": "Seeded: skipAmountMatch",
+      "defects": [
+        "skipAmountMatch"
+      ],
+      "description": "Fulfills without comparing event amount and currency to the order",
+      "results": {
+        "amount": {
+          "status": "fail",
+          "evidence": "lab:owned-checkout:amount:1/3-checks-passed",
+          "checks": [
+            {
+              "id": "client-price-ignored",
+              "description": "Order total comes from the catalog, not a client-sent price",
+              "expected": 5000,
+              "observed": 5000,
+              "pass": true
+            },
+            {
+              "id": "underpaid-event-rejected",
+              "description": "A success event for less than the order total does not fulfill",
+              "expected": 0,
+              "observed": 1,
+              "pass": false
+            },
+            {
+              "id": "currency-mismatch-rejected",
+              "description": "A success event in another currency does not fulfill",
+              "expected": 0,
+              "observed": 1,
+              "pass": false
+            }
+          ]
+        },
+        "binding": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:binding:2/2-checks-passed",
+          "checks": [
+            {
+              "id": "cross-order-event-rejected",
+              "description": "Paying for a cheap order cannot fulfill an expensive one",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-order-rejected",
+              "description": "An event naming a nonexistent order fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authenticity": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authenticity:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "unsigned-rejected",
+              "description": "An unsigned event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "wrong-secret-rejected",
+              "description": "An event signed with another key does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "stale-timestamp-rejected",
+              "description": "A correctly signed event from an hour ago does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "tampered-body-rejected",
+              "description": "Changing a signed body invalidates it",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "fulfillment": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:fulfillment:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "verified-success-fulfills",
+              "description": "A valid signed success event fulfills the order exactly once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "failed-payment-not-fulfilled",
+              "description": "A payment.failed event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "pending-payment-not-fulfilled",
+              "description": "A payment.processing event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-payment-ignored",
+              "description": "An event for a payment the merchant never created fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authorization": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authorization:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "other-customer-cannot-read",
+              "description": "Another customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "other-customer-cannot-pay",
+              "description": "Another customer cannot start payment for the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "anonymous-cannot-read",
+              "description": "A request with no customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            }
+          ]
+        },
+        "idempotency": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:idempotency:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "duplicate-delivery",
+              "description": "The same event delivered twice fulfills once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "distinct-events-same-payment",
+              "description": "Two success events for one payment fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "concurrent-delivery",
+              "description": "Five concurrent deliveries of one event fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            }
+          ]
+        }
+      },
+      "score": {
+        "lower": 50,
+        "upper": 85,
+        "observed": 76.92307692307692,
+        "coverage": 65,
+        "gate": "critical-failure",
+        "criticalFailures": [
+          "amount"
+        ],
+        "criticalUnknown": []
+      }
+    },
+    {
+      "id": "LAB-3",
+      "label": "Seeded: skipOrderMatch",
+      "defects": [
+        "skipOrderMatch"
+      ],
+      "description": "Trusts the order ID in the event instead of the payment it belongs to",
+      "results": {
+        "amount": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:amount:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "client-price-ignored",
+              "description": "Order total comes from the catalog, not a client-sent price",
+              "expected": 5000,
+              "observed": 5000,
+              "pass": true
+            },
+            {
+              "id": "underpaid-event-rejected",
+              "description": "A success event for less than the order total does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "currency-mismatch-rejected",
+              "description": "A success event in another currency does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "binding": {
+          "status": "fail",
+          "evidence": "lab:owned-checkout:binding:1/2-checks-passed",
+          "checks": [
+            {
+              "id": "cross-order-event-rejected",
+              "description": "Paying for a cheap order cannot fulfill an expensive one",
+              "expected": 0,
+              "observed": 1,
+              "pass": false
+            },
+            {
+              "id": "unknown-order-rejected",
+              "description": "An event naming a nonexistent order fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authenticity": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authenticity:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "unsigned-rejected",
+              "description": "An unsigned event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "wrong-secret-rejected",
+              "description": "An event signed with another key does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "stale-timestamp-rejected",
+              "description": "A correctly signed event from an hour ago does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "tampered-body-rejected",
+              "description": "Changing a signed body invalidates it",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "fulfillment": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:fulfillment:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "verified-success-fulfills",
+              "description": "A valid signed success event fulfills the order exactly once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "failed-payment-not-fulfilled",
+              "description": "A payment.failed event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "pending-payment-not-fulfilled",
+              "description": "A payment.processing event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-payment-ignored",
+              "description": "An event for a payment the merchant never created fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authorization": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authorization:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "other-customer-cannot-read",
+              "description": "Another customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "other-customer-cannot-pay",
+              "description": "Another customer cannot start payment for the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "anonymous-cannot-read",
+              "description": "A request with no customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            }
+          ]
+        },
+        "idempotency": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:idempotency:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "duplicate-delivery",
+              "description": "The same event delivered twice fulfills once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "distinct-events-same-payment",
+              "description": "Two success events for one payment fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "concurrent-delivery",
+              "description": "Five concurrent deliveries of one event fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            }
+          ]
+        }
+      },
+      "score": {
+        "lower": 55,
+        "upper": 90,
+        "observed": 84.61538461538461,
+        "coverage": 65,
+        "gate": "critical-failure",
+        "criticalFailures": [
+          "binding"
+        ],
+        "criticalUnknown": []
+      }
+    },
+    {
+      "id": "LAB-4",
+      "label": "Seeded: skipSignature",
+      "defects": [
+        "skipSignature"
+      ],
+      "description": "Accepts webhooks without verifying the signature",
+      "results": {
+        "amount": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:amount:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "client-price-ignored",
+              "description": "Order total comes from the catalog, not a client-sent price",
+              "expected": 5000,
+              "observed": 5000,
+              "pass": true
+            },
+            {
+              "id": "underpaid-event-rejected",
+              "description": "A success event for less than the order total does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "currency-mismatch-rejected",
+              "description": "A success event in another currency does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "binding": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:binding:2/2-checks-passed",
+          "checks": [
+            {
+              "id": "cross-order-event-rejected",
+              "description": "Paying for a cheap order cannot fulfill an expensive one",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-order-rejected",
+              "description": "An event naming a nonexistent order fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authenticity": {
+          "status": "fail",
+          "evidence": "lab:owned-checkout:authenticity:0/4-checks-passed",
+          "checks": [
+            {
+              "id": "unsigned-rejected",
+              "description": "An unsigned event does not fulfill",
+              "expected": 0,
+              "observed": 1,
+              "pass": false
+            },
+            {
+              "id": "wrong-secret-rejected",
+              "description": "An event signed with another key does not fulfill",
+              "expected": 0,
+              "observed": 1,
+              "pass": false
+            },
+            {
+              "id": "stale-timestamp-rejected",
+              "description": "A correctly signed event from an hour ago does not fulfill",
+              "expected": 0,
+              "observed": 1,
+              "pass": false
+            },
+            {
+              "id": "tampered-body-rejected",
+              "description": "Changing a signed body invalidates it",
+              "expected": 0,
+              "observed": 1,
+              "pass": false
+            }
+          ]
+        },
+        "fulfillment": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:fulfillment:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "verified-success-fulfills",
+              "description": "A valid signed success event fulfills the order exactly once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "failed-payment-not-fulfilled",
+              "description": "A payment.failed event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "pending-payment-not-fulfilled",
+              "description": "A payment.processing event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-payment-ignored",
+              "description": "An event for a payment the merchant never created fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authorization": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authorization:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "other-customer-cannot-read",
+              "description": "Another customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "other-customer-cannot-pay",
+              "description": "Another customer cannot start payment for the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "anonymous-cannot-read",
+              "description": "A request with no customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            }
+          ]
+        },
+        "idempotency": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:idempotency:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "duplicate-delivery",
+              "description": "The same event delivered twice fulfills once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "distinct-events-same-payment",
+              "description": "Two success events for one payment fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "concurrent-delivery",
+              "description": "Five concurrent deliveries of one event fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            }
+          ]
+        }
+      },
+      "score": {
+        "lower": 55,
+        "upper": 90,
+        "observed": 84.61538461538461,
+        "coverage": 65,
+        "gate": "critical-failure",
+        "criticalFailures": [
+          "authenticity"
+        ],
+        "criticalUnknown": []
+      }
+    },
+    {
+      "id": "LAB-5",
+      "label": "Seeded: fulfillOnAnyStatus",
+      "defects": [
+        "fulfillOnAnyStatus"
+      ],
+      "description": "Fulfills on any payment event, not only a success",
+      "results": {
+        "amount": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:amount:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "client-price-ignored",
+              "description": "Order total comes from the catalog, not a client-sent price",
+              "expected": 5000,
+              "observed": 5000,
+              "pass": true
+            },
+            {
+              "id": "underpaid-event-rejected",
+              "description": "A success event for less than the order total does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "currency-mismatch-rejected",
+              "description": "A success event in another currency does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "binding": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:binding:2/2-checks-passed",
+          "checks": [
+            {
+              "id": "cross-order-event-rejected",
+              "description": "Paying for a cheap order cannot fulfill an expensive one",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-order-rejected",
+              "description": "An event naming a nonexistent order fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authenticity": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authenticity:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "unsigned-rejected",
+              "description": "An unsigned event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "wrong-secret-rejected",
+              "description": "An event signed with another key does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "stale-timestamp-rejected",
+              "description": "A correctly signed event from an hour ago does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "tampered-body-rejected",
+              "description": "Changing a signed body invalidates it",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "fulfillment": {
+          "status": "fail",
+          "evidence": "lab:owned-checkout:fulfillment:2/4-checks-passed",
+          "checks": [
+            {
+              "id": "verified-success-fulfills",
+              "description": "A valid signed success event fulfills the order exactly once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "failed-payment-not-fulfilled",
+              "description": "A payment.failed event does not fulfill",
+              "expected": 0,
+              "observed": 1,
+              "pass": false
+            },
+            {
+              "id": "pending-payment-not-fulfilled",
+              "description": "A payment.processing event does not fulfill",
+              "expected": 0,
+              "observed": 1,
+              "pass": false
+            },
+            {
+              "id": "unknown-payment-ignored",
+              "description": "An event for a payment the merchant never created fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authorization": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authorization:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "other-customer-cannot-read",
+              "description": "Another customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "other-customer-cannot-pay",
+              "description": "Another customer cannot start payment for the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "anonymous-cannot-read",
+              "description": "A request with no customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            }
+          ]
+        },
+        "idempotency": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:idempotency:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "duplicate-delivery",
+              "description": "The same event delivered twice fulfills once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "distinct-events-same-payment",
+              "description": "Two success events for one payment fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "concurrent-delivery",
+              "description": "Five concurrent deliveries of one event fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            }
+          ]
+        }
+      },
+      "score": {
+        "lower": 55,
+        "upper": 90,
+        "observed": 84.61538461538461,
+        "coverage": 65,
+        "gate": "critical-failure",
+        "criticalFailures": [
+          "fulfillment"
+        ],
+        "criticalUnknown": []
+      }
+    },
+    {
+      "id": "LAB-6",
+      "label": "Seeded: skipOwnership",
+      "defects": [
+        "skipOwnership"
+      ],
+      "description": "Lets any customer read or pay any order",
+      "results": {
+        "amount": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:amount:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "client-price-ignored",
+              "description": "Order total comes from the catalog, not a client-sent price",
+              "expected": 5000,
+              "observed": 5000,
+              "pass": true
+            },
+            {
+              "id": "underpaid-event-rejected",
+              "description": "A success event for less than the order total does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "currency-mismatch-rejected",
+              "description": "A success event in another currency does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "binding": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:binding:2/2-checks-passed",
+          "checks": [
+            {
+              "id": "cross-order-event-rejected",
+              "description": "Paying for a cheap order cannot fulfill an expensive one",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-order-rejected",
+              "description": "An event naming a nonexistent order fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authenticity": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authenticity:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "unsigned-rejected",
+              "description": "An unsigned event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "wrong-secret-rejected",
+              "description": "An event signed with another key does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "stale-timestamp-rejected",
+              "description": "A correctly signed event from an hour ago does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "tampered-body-rejected",
+              "description": "Changing a signed body invalidates it",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "fulfillment": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:fulfillment:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "verified-success-fulfills",
+              "description": "A valid signed success event fulfills the order exactly once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "failed-payment-not-fulfilled",
+              "description": "A payment.failed event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "pending-payment-not-fulfilled",
+              "description": "A payment.processing event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-payment-ignored",
+              "description": "An event for a payment the merchant never created fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authorization": {
+          "status": "fail",
+          "evidence": "lab:owned-checkout:authorization:0/3-checks-passed",
+          "checks": [
+            {
+              "id": "other-customer-cannot-read",
+              "description": "Another customer cannot read the order",
+              "expected": 404,
+              "observed": 200,
+              "pass": false
+            },
+            {
+              "id": "other-customer-cannot-pay",
+              "description": "Another customer cannot start payment for the order",
+              "expected": 404,
+              "observed": 201,
+              "pass": false
+            },
+            {
+              "id": "anonymous-cannot-read",
+              "description": "A request with no customer cannot read the order",
+              "expected": 404,
+              "observed": 200,
+              "pass": false
+            }
+          ]
+        },
+        "idempotency": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:idempotency:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "duplicate-delivery",
+              "description": "The same event delivered twice fulfills once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "distinct-events-same-payment",
+              "description": "Two success events for one payment fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "concurrent-delivery",
+              "description": "Five concurrent deliveries of one event fulfill once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            }
+          ]
+        }
+      },
+      "score": {
+        "lower": 55,
+        "upper": 90,
+        "observed": 84.61538461538461,
+        "coverage": 65,
+        "gate": "critical-failure",
+        "criticalFailures": [
+          "authorization"
+        ],
+        "criticalUnknown": []
+      }
+    },
+    {
+      "id": "LAB-7",
+      "label": "Seeded: noIdempotency",
+      "defects": [
+        "noIdempotency"
+      ],
+      "description": "Processes duplicate events and fulfills an order more than once",
+      "results": {
+        "amount": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:amount:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "client-price-ignored",
+              "description": "Order total comes from the catalog, not a client-sent price",
+              "expected": 5000,
+              "observed": 5000,
+              "pass": true
+            },
+            {
+              "id": "underpaid-event-rejected",
+              "description": "A success event for less than the order total does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "currency-mismatch-rejected",
+              "description": "A success event in another currency does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "binding": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:binding:2/2-checks-passed",
+          "checks": [
+            {
+              "id": "cross-order-event-rejected",
+              "description": "Paying for a cheap order cannot fulfill an expensive one",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-order-rejected",
+              "description": "An event naming a nonexistent order fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authenticity": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authenticity:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "unsigned-rejected",
+              "description": "An unsigned event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "wrong-secret-rejected",
+              "description": "An event signed with another key does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "stale-timestamp-rejected",
+              "description": "A correctly signed event from an hour ago does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "tampered-body-rejected",
+              "description": "Changing a signed body invalidates it",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "fulfillment": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:fulfillment:4/4-checks-passed",
+          "checks": [
+            {
+              "id": "verified-success-fulfills",
+              "description": "A valid signed success event fulfills the order exactly once",
+              "expected": 1,
+              "observed": 1,
+              "pass": true
+            },
+            {
+              "id": "failed-payment-not-fulfilled",
+              "description": "A payment.failed event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "pending-payment-not-fulfilled",
+              "description": "A payment.processing event does not fulfill",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            },
+            {
+              "id": "unknown-payment-ignored",
+              "description": "An event for a payment the merchant never created fulfills nothing",
+              "expected": 0,
+              "observed": 0,
+              "pass": true
+            }
+          ]
+        },
+        "authorization": {
+          "status": "pass",
+          "evidence": "lab:owned-checkout:authorization:3/3-checks-passed",
+          "checks": [
+            {
+              "id": "other-customer-cannot-read",
+              "description": "Another customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "other-customer-cannot-pay",
+              "description": "Another customer cannot start payment for the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            },
+            {
+              "id": "anonymous-cannot-read",
+              "description": "A request with no customer cannot read the order",
+              "expected": 404,
+              "observed": 404,
+              "pass": true
+            }
+          ]
+        },
+        "idempotency": {
+          "status": "fail",
+          "evidence": "lab:owned-checkout:idempotency:0/3-checks-passed",
+          "checks": [
+            {
+              "id": "duplicate-delivery",
+              "description": "The same event delivered twice fulfills once",
+              "expected": 1,
+              "observed": 2,
+              "pass": false
+            },
+            {
+              "id": "distinct-events-same-payment",
+              "description": "Two success events for one payment fulfill once",
+              "expected": 1,
+              "observed": 2,
+              "pass": false
+            },
+            {
+              "id": "concurrent-delivery",
+              "description": "Five concurrent deliveries of one event fulfill once",
+              "expected": 1,
+              "observed": 5,
+              "pass": false
+            }
+          ]
+        }
+      },
+      "score": {
+        "lower": 55,
+        "upper": 90,
+        "observed": 84.61538461538461,
+        "coverage": 65,
+        "gate": "insufficient-evidence",
+        "criticalFailures": [],
+        "criticalUnknown": []
+      }
+    }
+  ]
+}

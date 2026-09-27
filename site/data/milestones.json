@@ -1,7 +1,7 @@
 [
   { "id": 1, "title": "Protocol v1", "detail": "Full-text literature extraction and novelty matrix; record exclusions.", "phase": "Define", "status": "in-progress" },
   { "id": 2, "title": "Metric v1", "detail": "Explicit subchecks, independent oracle definitions and preregistration.", "phase": "Define", "status": "in-progress" },
-  { "id": 3, "title": "Owned checkout", "detail": "One reference checkout with a payment/order state database and no outbound fulfillment.", "phase": "Build", "status": "not-started" },
+  { "id": 3, "title": "Owned checkout", "detail": "One reference checkout with a payment/order state database and no outbound fulfillment.", "phase": "Build", "status": "in-progress" },
   { "id": 4, "title": "Stripe sandbox adapter", "detail": "Authoritative completion and negative cases.", "phase": "Build", "status": "not-started" },
   { "id": 5, "title": "Square sandbox adapter", "detail": "Provider-specific signature and lifecycle mapping.", "phase": "Build", "status": "not-started" },
   { "id": 6, "title": "Browser harness", "detail": "Deterministic flows, bounded retries and navigation-inconclusive state.", "phase": "Build", "status": "not-started" },
