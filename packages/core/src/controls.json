@@ -1,0 +1,86 @@
+[
+  {
+    "id": "amount",
+    "title": "Server-authoritative amount",
+    "weight": 15,
+    "critical": true,
+    "description": "Order amount, currency and discounts come from the server; mismatches cannot fulfill."
+  },
+  {
+    "id": "binding",
+    "title": "Order and merchant binding",
+    "weight": 10,
+    "critical": true,
+    "description": "Payment, merchant, customer and order identities agree before fulfillment."
+  },
+  {
+    "id": "authenticity",
+    "title": "Webhook authenticity",
+    "weight": 10,
+    "critical": true,
+    "description": "Provider signature validation uses the original body and provider-specific verification."
+  },
+  {
+    "id": "fulfillment",
+    "title": "Verified fulfillment",
+    "weight": 10,
+    "critical": true,
+    "description": "Only a verified successful payment can authorize the matching business action."
+  },
+  {
+    "id": "authorization",
+    "title": "Object authorization",
+    "weight": 10,
+    "critical": true,
+    "description": "Another account cannot read, capture, refund or fulfill the order."
+  },
+  {
+    "id": "idempotency",
+    "title": "Idempotency and replay",
+    "weight": 10,
+    "critical": false,
+    "description": "Retries, duplicate events and concurrent delivery cannot duplicate economic effects."
+  },
+  {
+    "id": "lifecycle",
+    "title": "Payment lifecycle",
+    "weight": 10,
+    "critical": false,
+    "description": "Delayed, reordered, failed, refunded and disputed states reconcile correctly."
+  },
+  {
+    "id": "secrets",
+    "title": "Secret isolation",
+    "weight": 5,
+    "critical": false,
+    "description": "Secret credentials remain server-side, isolated by environment and least privilege."
+  },
+  {
+    "id": "data",
+    "title": "Sensitive-data minimization",
+    "weight": 5,
+    "critical": false,
+    "description": "No real card data, credentials or personal identifiers in retained artifacts."
+  },
+  {
+    "id": "browser",
+    "title": "Payment-page integrity",
+    "weight": 5,
+    "critical": false,
+    "description": "Scripts and browser protections follow the applicable integration threat model."
+  },
+  {
+    "id": "recovery",
+    "title": "Recovery and reconciliation",
+    "weight": 5,
+    "critical": false,
+    "description": "Dropped events and outages recover without silently losing payment/order consistency."
+  },
+  {
+    "id": "operations",
+    "title": "Audit and maintenance",
+    "weight": 5,
+    "critical": false,
+    "description": "Versioned dependencies, redacted traces and alerting support incident response."
+  }
+]

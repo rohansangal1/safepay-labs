@@ -1,0 +1,19 @@
+{
+  // Type-check only. Node runs .ts files directly via type stripping, so the
+  // code must stay erasable: no enums, namespaces or parameter properties.
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["es2023"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["packages", "lab", "scripts"]
+}

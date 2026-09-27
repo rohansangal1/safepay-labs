@@ -12,8 +12,14 @@ Draft operational design, not a finding that the project complies with every app
 
 Authorization from a merchant is not permission to attack a processor, CDN or unrelated third party. Test cards belong only in intended sandbox flows. Never attempt to use them in production. Do not place live orders, trigger fulfillment, consume inventory, initiate real refunds/disputes, send forged events to external targets, or probe other users' objects under this protocol. An own credit card does not authorize adversarial testing of a merchant.
 
+## Study subjects: AI-generated apps and open-source shops
+- **Generated code is untrusted.** Build and run each agent-generated app in an isolated container: no host mounts beyond its own directory, egress allowlisted to the provider's sandbox API only, no access to other subjects' data. The agent session that writes the code also runs sandboxed. Never give an agent live keys.
+- **Open-source shops run only as our own local installs**, configured with our own sandbox accounts. Never test a maintainer's or anyone else's deployment. A weakness in a shop's code is a finding about the software: report it privately to the maintainers under their security policy and publish only after coordinated disclosure (ADR 006).
+- **Provider sandboxes** are used only through documented test flows in our own accounts. Adversarial deliveries (forged, replayed or mismatched events) are sent only to our own subject endpoints, never to the provider.
+- **Tool scope gate.** The CLI and harness refuse targets that aren't loopback or listed in a signed scope file, and refuse to run when a live-mode key or live-mode provider object is detected. This ships in the first CLI release, not later.
+
 ## Enforced controls for the future runner
-The current prototype has no network test runner. Implement these before any collection:
+The lab runs only locally today: the reference checkout binds to 127.0.0.1 and makes no outbound calls. Implement these before any sandbox or external collection:
 - A signed/reviewed scope record naming exact origins, ports, account IDs, actions, environments, expiration, request budgets, owners and incident contacts.
 - Deny by default. Validate all navigation, redirects, popup, worker and API destinations, not just the first URL. Egress policy at the network/container layer complements browser routing; DNS/IP checks must address rebinding and metadata endpoints.
 - Separate sandbox secrets and credentials. Verify test-mode state from provider objects/configuration, rather than relying only on key prefixes or a URL label. Never accept arbitrary user-supplied target URLs in the dashboard.

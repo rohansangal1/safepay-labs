@@ -1,0 +1,13 @@
+{
+  "name": "@pias/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Payment Integration Assurance Score engine and control catalog. Zero runtime dependencies.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./score": "./src/score.ts",
+    "./controls.json": "./src/controls.json"
+  }
+}

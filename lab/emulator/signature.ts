@@ -1,16 +1,16 @@
-'use strict';
 // Webhook signing for the lab provider: HMAC-SHA256 over "<timestamp>.<raw body>".
-// Modeled on common provider schemes; not compatible with any real provider.
-const crypto = require('node:crypto');
+// Modeled on common provider schemes; not compatible with any real provider yet
+// (Phase 2 adds Stripe- and Square-conformant emulators).
+import crypto from 'node:crypto';
 
-const TOLERANCE_SECONDS = 300;
+export const TOLERANCE_SECONDS = 300;
 
-function sign(body, secret, timestamp) {
+export function sign(body: string, secret: string, timestamp: number): string {
   const mac = crypto.createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
   return `t=${timestamp},v1=${mac}`;
 }
 
-function verify(body, header, secret, nowSeconds) {
+export function verify(body: string, header: unknown, secret: string, nowSeconds: number): boolean {
   if (typeof header !== 'string') return false;
   const parts = Object.fromEntries(header.split(',').map(p => {
     const i = p.indexOf('=');
@@ -22,5 +22,3 @@ function verify(body, header, secret, nowSeconds) {
   const expected = Buffer.from(sign(body, secret, timestamp).split('v1=')[1], 'hex');
   return crypto.timingSafeEqual(Buffer.from(parts.v1, 'hex'), expected);
 }
-
-module.exports = { sign, verify, TOLERANCE_SECONDS };

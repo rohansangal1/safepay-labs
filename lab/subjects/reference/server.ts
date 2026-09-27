@@ -1,8 +1,7 @@
-'use strict';
 // Runs the owned reference checkout for manual exploration. Binds to loopback only.
-const http = require('node:http');
-const crypto = require('node:crypto');
-const { createCheckout, DEFECTS } = require('./app.cjs');
+import http from 'node:http';
+import crypto from 'node:crypto';
+import { createCheckout, DEFECTS } from './app.ts';
 
 const port = Number(process.env.PORT || 4280);
 const secret = process.env.LAB_WEBHOOK_SECRET || crypto.randomBytes(32).toString('hex');

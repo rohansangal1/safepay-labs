@@ -39,8 +39,15 @@ Otherwise: **assessed**. This label does not mean safe, certified, or vulnerabil
 Example: pass 75, fail 10, unknown 15 yields [75,90], coverage 85%, observed pass rate 88.2%. If the failed control is webhook authenticity, the result is critical failure. A browser-only observation can yield a wide range and must not be ranked alongside instrumented tests.
 
 ## Evidence and versioning
-Each evidence item should include fixture ID, pseudonymous run ID, observation layer, test ID, oracle version, expected/observed invariant, timestamp, source commit, provider API version, artifact hash and redaction policy version. Self-attestation is separate from verified outcomes. Record assessor and adjudication state; do not collapse confidence into an unexplained numeric multiplier.
+Each evidence item should include subject ID, pseudonymous run ID, observation layer, test ID, oracle version, expected/observed invariant, timestamp, source commit, provider API version, artifact hash and redaction policy version. Self-attestation is separate from verified outcomes. Record assessor and adjudication state; do not collapse confidence into an unexplained numeric multiplier.
 
 Version controls and weights together. Report before/after changes only under the same metric or rescore retained compatible evidence. Publish individual vulnerability severity separately, optionally with CVSS v4.0; CVSS does not measure absence of defects across an integration.
 
-The implemented engine validates status, evidence presence, reviewed N/A and weights. It does not authenticate evidence content or enforce institutional review. Dashboard evidence strings are synthetic placeholders. Durable evidence validation and real test oracles remain future work.
+The implemented engine (`packages/core/src/score.ts`) validates status, evidence presence, reviewed N/A and weights. It does not authenticate evidence content. Lab runs on the reference checkout produce real check outcomes for 6 of the 12 controls; the site's F-fixtures are synthetic placeholders. Evidence records with provenance and a check registry are Phase 1 work.
+
+## Open questions for Metric v1
+To be settled, each with an ADR, before preregistration:
+- **Should idempotency be critical?** Duplicate fulfillment is direct money loss, yet today the seeded no-idempotency defect only yields *insufficient evidence*, not *critical failure*.
+- **Lead with the profile, not the number.** Reports should show the gate and the per-control outcome profile first and the assurance range second. Test whether the weights add anything over equal weights or a pass count (RQ3).
+- **Observation-layer profiles.** Some controls (secret isolation, audit) are invisible to black-box testing, so a single 80% coverage threshold structurally penalizes browser-only assessment. Define separate browser-only, backend and full profiles, each with its own applicable controls and threshold.
+- **Subchecks.** Formalize each control's checks in a versioned registry (ID, control, observation layer, oracle, provider applicability) so a control's status is a documented function of its checks.

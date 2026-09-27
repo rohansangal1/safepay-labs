@@ -7,8 +7,7 @@
   <meta name="description" content="Research workspace for the Payment Integration Assurance Score (PIAS).">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f5f8b'/%3E%3Cpath d='M10 23V9h7a5 5 0 010 10h-4' fill='none' stroke='%23fff' stroke-width='3'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
-  <script defer src="score.js"></script>
-  <script defer src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -32,11 +31,11 @@
     <section id="overview" class="view">
       <div class="heading">
         <h1>Research overview</h1>
-        <p>PIAS v0.1 — a draft score for how much evidence a payment integration provides for its security controls.</p>
+        <p>Do AI coding agents build safe payment integrations? Measured with a harm oracle and PIAS v0.1, a draft evidence-aware assurance score.</p>
       </div>
 
       <div class="stats">
-        <div class="stat"><span>Planned configurations</span><strong>3,072</strong><small>8 families × 3 architectures × 2 providers × 16 profiles × 4 seeds</small></div>
+        <div class="stat"><span>Planned subjects</span><strong>~200</strong><small>Agent-built Stripe and Square checkouts, size fixed after the pilot</small></div>
         <div class="stat"><span>Controls</span><strong id="stat-controls">—</strong><small id="stat-critical">—</small></div>
         <div class="stat"><span>Milestones done</span><strong id="stat-milestones">—</strong><small id="stat-milestones-sub">—</small></div>
         <div class="stat"><span>Lab runs</span><strong id="stat-lab">0</strong><small>Local checkout · 0 real merchant assessments</small></div>

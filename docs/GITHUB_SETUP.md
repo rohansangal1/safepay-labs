@@ -1,23 +1,19 @@
-# GitHub setup and initial backlog
-Intended remote: https://github.com/rohansangal1/payment-integration-lab
-Keep private while metric and evidence handling mature. License selection and publication approval are owner decisions.
+# Repository setup
 
-Included: README, security policy, PR template, dependency-free CI, score tests, offline fixture model, manifest generator, dashboard and research documents. No keys or raw traces are required.
+Remote: https://github.com/rohansangal1/payment-integration-lab. Keep it private until the first public release is reviewed ([ADR 006](decisions/006-public-site-and-publishing.md)). License: Apache-2.0 ([ADR 005](decisions/005-license.md)).
 
-Suggested settings after first push: require PR review and passing Research checks on main; disallow force pushes; enable private vulnerability reporting when supported; enable secret scanning/push protection if available for the account/plan. These settings are recommendations, not already configured. Current workflow action tags should be pinned to reviewed immutable commit SHAs before using privileged CI or secrets.
+## Included
+- CI (`.github/workflows/ci.yml`) on Node 22 and 24: `npm ci`, type check, tests, and a generated-files check that fails if `data/runs` or the site's copies are stale.
+- CodeQL (`.github/workflows/codeql.yml`) on push, pull request and weekly.
+- All actions pinned to full commit SHAs with the release tag in a comment. Update them deliberately, e.g. with Dependabot for `github-actions`.
+- Issue templates (bug, research change) with a private route for security reports; PR template.
 
-Initial milestones/issues to create after scope review:
-1. Protocol v1: full-text literature extraction and novelty matrix; record exclusions.
-2. Metric v1: explicit subchecks, independent oracle definitions and preregistration.
-3. Owned checkout: one reference with payment/order state database and no outbound fulfillment.
-4. Stripe sandbox adapter: authoritative completion and negative cases.
-5. Square sandbox adapter: provider-specific signature and lifecycle mapping.
-6. Browser harness: deterministic flows, bounded retries and navigation-inconclusive state.
-7. Evidence pipeline: redaction, hashes, scope IDs and retention enforcement.
-8. Safety runner: allowlisted egress, expiry, kill switch and live-mode rejection.
-9. Blind pilot: independently annotated defect/control profiles and held-out family split.
-10. Architecture study: matched experiments and Pareto analysis.
-11. External cohort: consent template, institutional determination and recruitment.
-12. Artifact release: reproducibility scripts, data card and coordinated disclosure review.
+## Settings to turn on (manual, in GitHub → Settings)
+These are recommendations, not yet configured:
+1. **Branch protection on `main`:** require a pull request and passing *Research checks* and *CodeQL*; block force pushes.
+2. **Private vulnerability reporting** (Security → Advisories). The issue template links to it, and the link doesn't work until this is enabled.
+3. **Secret scanning and push protection.**
+4. **Dependabot** alerts and version updates for `npm` and `github-actions`.
 
-No external assessment jobs should run automatically on pull requests. Fork PRs must never obtain processor secrets. Use dedicated sandbox accounts and manual protected workflows for future approved integrations.
+## Backlog
+The roadmap lives in [RESEARCH_PLAN.md](RESEARCH_PLAN.md#milestones-and-exit-gates) and on the site (`site/data/milestones.json`). Create one GitHub milestone per phase (0–5) and issues for the items in each. No external assessment job may run automatically on pull requests; fork PRs must never receive provider secrets. Sandbox runs use dedicated test accounts and a manual, protected workflow.

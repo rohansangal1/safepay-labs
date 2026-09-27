@@ -1,25 +1,27 @@
-'use strict';
 // Runs invariant checks against the owned reference checkout and maps them to PIAS controls.
 // The oracle is the checkout's own fulfillment records, not the HTTP responses.
-const http = require('node:http');
-const crypto = require('node:crypto');
-const fs = require('node:fs');
-const path = require('node:path');
-const { createCheckout, DEFECTS } = require('./app.cjs');
-const { paymentEvent, signedDelivery } = require('./provider.cjs');
-const { score } = require('../../site/score.js');
-const controls = require('../../site/data/controls.json');
+// Phase 1 moves these checks into packages/checks behind a SubjectAdapter interface.
+import http from 'node:http';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import type { AddressInfo } from 'node:net';
+import { score, controls, METRIC_VERSION, type Results } from '@pias/core';
+import { createCheckout, DEFECTS, type Defect } from './app.ts';
+import { paymentEvent, signedDelivery, type PaymentEvent } from '../../emulator/provider.ts';
 
-const OUTPUT = path.join(__dirname, '..', '..', 'site', 'data', 'assessments.json');
+const OUTPUT = path.join(import.meta.dirname, '..', '..', '..', 'data', 'runs', 'lab-reference.json');
 
-async function startLab(defects) {
+interface Call { status: number; body: any }
+
+async function startLab(defects: string[]) {
   const secret = crypto.randomBytes(32).toString('hex');
   const checkout = createCheckout({ secret, defects });
   const server = http.createServer(checkout.handle);
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const base = `http://127.0.0.1:${server.address().port}`;
+  await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
-  async function call(method, route, { customer, body, headers = {} } = {}) {
+  async function call(method: string, route: string, { customer, body, headers = {} }: { customer?: string; body?: unknown; headers?: Record<string, string> } = {}): Promise<Call> {
     const res = await fetch(base + route, {
       method,
       headers: { 'content-type': 'application/json', ...(customer ? { 'x-lab-customer': customer } : {}), ...headers },
@@ -28,23 +30,29 @@ async function startLab(defects) {
     return { status: res.status, body: await res.json() };
   }
 
+  const deliverRaw = (body: string, signature: string | null) =>
+    call('POST', '/webhooks/payments', { body, headers: signature ? { 'x-lab-signature': signature } : {} });
+
   return {
     secret,
     call,
-    order: async (customer, items = [{ sku: 'lab-tee', qty: 1 }]) => (await call('POST', '/orders', { customer, body: { items } })).body,
-    pay: async (customer, order) => (await call('POST', `/orders/${order.id}/payment`, { customer })).body,
-    deliverRaw: (body, signature) => call('POST', '/webhooks/payments', { body, headers: signature ? { 'x-lab-signature': signature } : {} }),
-    deliver(event, { secret: key = secret, timestamp } = {}) {
+    order: async (customer: string, items: object[] = [{ sku: 'lab-tee', qty: 1 }]) => (await call('POST', '/orders', { customer, body: { items } })).body,
+    pay: async (customer: string, order: { id: string }) => (await call('POST', `/orders/${order.id}/payment`, { customer })).body,
+    deliverRaw,
+    deliver(event: PaymentEvent, { secret: key = secret, timestamp }: { secret?: string; timestamp?: number } = {}) {
       const { body, signature } = signedDelivery(event, key, timestamp);
-      return this.deliverRaw(body, signature);
+      return deliverRaw(body, signature);
     },
-    fulfillments: orderId => checkout.state.fulfillments.filter(f => orderId === undefined || f.order === orderId).length,
-    close: () => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); }),
+    fulfillments: (orderId?: string) => checkout.state.fulfillments.filter(f => orderId === undefined || f.order === orderId).length,
+    close: () => new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => resolve()); }),
   };
 }
 
+type Lab = Awaited<ReturnType<typeof startLab>>;
+type Check = [id: string, description: string, run: (lab: Lab) => Promise<{ expected: unknown; observed: unknown }>];
+
 // Each check returns { expected, observed }. A check passes only when they match exactly.
-const CHECKS = {
+export const CHECKS: Record<string, Check[]> = {
   amount: [
     ['client-price-ignored', 'Order total comes from the catalog, not a client-sent price', async lab => {
       const order = await lab.order('alice', [{ sku: 'lab-tee', qty: 2, price: 1 }]);
@@ -173,12 +181,12 @@ const CHECKS = {
   ],
 };
 
-async function assess(defects = []) {
-  const results = {};
+export async function assess(defects: string[] = []) {
+  const results: Results = {};
   for (const [control, checks] of Object.entries(CHECKS)) {
     const lab = await startLab(defects); // fresh state per control keeps checks independent
     try {
-      const outcomes = [];
+      const outcomes: { id: string; description: string; expected: unknown; observed: unknown; pass: boolean }[] = [];
       for (const [id, description, run] of checks) {
         const { expected, observed } = await run(lab);
         outcomes.push({ id, description, expected, observed, pass: observed === expected });
@@ -197,15 +205,15 @@ async function assess(defects = []) {
 }
 
 async function main() {
-  const variants = [{ id: 'LAB-0', label: 'Baseline', defects: [] }]
-    .concat(Object.keys(DEFECTS).map((d, i) => ({ id: `LAB-${i + 1}`, label: `Seeded: ${d}`, defects: [d], description: DEFECTS[d] })));
+  const baseline = { id: 'LAB-0', label: 'Baseline', defects: [] as string[] };
+  const seeded = (Object.keys(DEFECTS) as Defect[]).map((d, i) => ({ id: `LAB-${i + 1}`, label: `Seeded: ${d}`, defects: [d], description: DEFECTS[d] }));
   const runs = [];
-  for (const v of variants) runs.push({ ...v, ...(await assess(v.defects)) });
+  for (const v of [baseline, ...seeded]) runs.push({ ...v, ...(await assess(v.defects)) });
 
   const output = {
     kind: 'lab-run',
     target: 'owned reference checkout (local, fake provider)',
-    metric_version: '0.1',
+    metric_version: METRIC_VERSION,
     note: 'Controls without checks are left unknown. These are lab fixtures, not merchant assessments.',
     runs,
   };
@@ -213,10 +221,11 @@ async function main() {
 
   for (const r of runs) {
     const failed = Object.entries(r.results).filter(([, x]) => x.status === 'fail').map(([c]) => c);
-    console.log(`${r.id.padEnd(6)} ${r.label.padEnd(30)} range ${Math.round(r.score.lower)}–${Math.round(r.score.upper)}  ${r.score.gate}${failed.length ? '  failed: ' + failed.join(', ') : ''}`);
+    console.log(`${r.id.padEnd(6)} ${r.label.padEnd(30)} range ${Math.round(r.score.lower ?? 0)}–${Math.round(r.score.upper ?? 0)}  ${r.score.gate}${failed.length ? '  failed: ' + failed.join(', ') : ''}`);
   }
   console.log(`\nWrote ${path.relative(process.cwd(), OUTPUT)}`);
 }
 
-module.exports = { assess, CHECKS };
-if (require.main === module) main().catch(err => { console.error(err); process.exit(1); });
+if (process.argv[1] === import.meta.filename) {
+  main().catch(err => { console.error(err); process.exit(1); });
+}

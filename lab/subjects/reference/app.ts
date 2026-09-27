@@ -1,10 +1,10 @@
-'use strict';
-// Owned reference checkout (milestone 3). Local only: no real provider, money, card data
-// or outbound network calls. Customers are synthetic identities sent in a header.
-const { verify } = require('./signature.cjs');
+// Owned reference checkout. Local only: no real provider, money, card data or outbound
+// network calls. Customers are synthetic identities sent in a header.
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import { verify } from '../../emulator/signature.ts';
 
-const CURRENCY = 'USD';
-const CATALOG = {
+export const CURRENCY = 'USD';
+export const CATALOG: Record<string, { name: string; price: number }> = {
   'lab-mug': { name: 'Lab mug', price: 1800 },
   'lab-tee': { name: 'Lab T-shirt', price: 2500 },
   'lab-sticker': { name: 'Sticker pack', price: 400 },
@@ -12,7 +12,7 @@ const CATALOG = {
 
 // Seeded defects. Each one removes exactly one safeguard so the assessment can
 // show that its checks detect the missing control.
-const DEFECTS = {
+export const DEFECTS = {
   trustClientAmount: 'Uses the price sent by the client instead of the catalog',
   skipAmountMatch: 'Fulfills without comparing event amount and currency to the order',
   skipOrderMatch: 'Trusts the order ID in the event instead of the payment it belongs to',
@@ -20,20 +20,32 @@ const DEFECTS = {
   fulfillOnAnyStatus: 'Fulfills on any payment event, not only a success',
   skipOwnership: 'Lets any customer read or pay any order',
   noIdempotency: 'Processes duplicate events and fulfills an order more than once',
-};
+} as const;
 
-function httpError(status, message) {
-  return Object.assign(new Error(message), { status });
+export type Defect = keyof typeof DEFECTS;
+
+interface Line { sku: string; qty: number; price: number }
+interface Order { id: string; customer: string; lines: Line[]; amount: number; currency: string; status: 'awaiting_payment' | 'fulfilled'; payment: string | null }
+interface Payment { id: string; order: string; amount: number; currency: string; status: 'requires_payment' | 'succeeded' | 'failed' }
+interface Fulfillment { order: string; payment: string; event: string }
+type Reply = [status: number, body: unknown];
+
+class HttpError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
 }
 
-function readBody(req, limit = 64 * 1024) {
+function readBody(req: IncomingMessage, limit = 64 * 1024): Promise<string> {
   return new Promise((resolve, reject) => {
-    const chunks = [];
+    const chunks: Buffer[] = [];
     let size = 0;
-    req.on('data', chunk => {
+    req.on('data', (chunk: Buffer) => {
       size += chunk.length;
       if (size > limit) {
-        reject(httpError(413, 'body too large'));
+        reject(new HttpError(413, 'body too large'));
         req.destroy();
       } else {
         chunks.push(chunk);
@@ -44,29 +56,41 @@ function readBody(req, limit = 64 * 1024) {
   });
 }
 
-function createCheckout({ secret, defects = [], now = () => Math.floor(Date.now() / 1000) } = {}) {
+export interface CheckoutOptions {
+  secret: string;
+  defects?: string[];
+  now?: () => number;
+}
+
+export function createCheckout({ secret, defects = [], now = () => Math.floor(Date.now() / 1000) }: CheckoutOptions) {
   if (!secret) throw new Error('Webhook secret required');
-  for (const d of defects) if (!DEFECTS[d]) throw new Error('Unknown defect: ' + d);
-  const has = d => defects.includes(d);
+  for (const d of defects) if (!(d in DEFECTS)) throw new Error('Unknown defect: ' + d);
+  const has = (d: Defect) => defects.includes(d);
 
-  // In-memory stand-in for the order/payment/fulfillment database.
-  const state = { orders: new Map(), payments: new Map(), processedEvents: new Set(), fulfillments: [], seq: 0 };
-  const nextId = prefix => `${prefix}_${String(++state.seq).padStart(4, '0')}`;
-  const view = o => ({ id: o.id, lines: o.lines, amount: o.amount, currency: o.currency, status: o.status, payment: o.payment });
+  // In-memory stand-in for the order/payment/fulfillment database (node:sqlite in Phase 1).
+  const state = {
+    orders: new Map<string, Order>(),
+    payments: new Map<string, Payment>(),
+    processedEvents: new Set<string>(),
+    fulfillments: [] as Fulfillment[],
+    seq: 0,
+  };
+  const nextId = (prefix: string) => `${prefix}_${String(++state.seq).padStart(4, '0')}`;
+  const view = (o: Order) => ({ id: o.id, lines: o.lines, amount: o.amount, currency: o.currency, status: o.status, payment: o.payment });
 
-  function ownedOrder(customer, orderId) {
+  function ownedOrder(customer: string | null, orderId: string): Order | null {
     const order = state.orders.get(orderId);
     if (!order) return null;
     if (!has('skipOwnership') && order.customer !== customer) return null;
     return order;
   }
 
-  function createOrder(customer, body) {
+  function createOrder(customer: string | null, body: any): Reply {
     if (!customer) return [401, { error: 'missing customer' }];
     const items = body && body.items;
     if (!Array.isArray(items) || !items.length || items.length > 20) return [400, { error: 'items required' }];
     let amount = 0;
-    const lines = [];
+    const lines: Line[] = [];
     for (const item of items) {
       const product = CATALOG[item && item.sku];
       if (!product || !Number.isInteger(item.qty) || item.qty < 1 || item.qty > 10) return [400, { error: 'invalid item' }];
@@ -74,25 +98,25 @@ function createCheckout({ secret, defects = [], now = () => Math.floor(Date.now(
       amount += price * item.qty;
       lines.push({ sku: item.sku, qty: item.qty, price });
     }
-    const order = { id: nextId('ord'), customer, lines, amount, currency: CURRENCY, status: 'awaiting_payment', payment: null };
+    const order: Order = { id: nextId('ord'), customer, lines, amount, currency: CURRENCY, status: 'awaiting_payment', payment: null };
     state.orders.set(order.id, order);
     return [201, view(order)];
   }
 
-  function createPayment(customer, orderId) {
+  function createPayment(customer: string | null, orderId: string): Reply {
     const order = ownedOrder(customer, orderId);
     if (!order) return [404, { error: 'order not found' }];
     if (order.payment) return [200, state.payments.get(order.payment)];
     if (order.status !== 'awaiting_payment') return [409, { error: 'order not payable' }];
-    const payment = { id: nextId('pay'), order: order.id, amount: order.amount, currency: order.currency, status: 'requires_payment' };
+    const payment: Payment = { id: nextId('pay'), order: order.id, amount: order.amount, currency: order.currency, status: 'requires_payment' };
     state.payments.set(payment.id, payment);
     order.payment = payment.id;
     return [201, payment];
   }
 
-  function handleWebhook(rawBody, signature) {
+  function handleWebhook(rawBody: string, signature: unknown): Reply {
     if (!has('skipSignature') && !verify(rawBody, signature, secret, now())) return [400, { error: 'invalid signature' }];
-    let event;
+    let event: any;
     try { event = JSON.parse(rawBody); } catch { return [400, { error: 'invalid json' }]; }
     if (!event || typeof event.id !== 'string' || !event.data || typeof event.data !== 'object') return [400, { error: 'invalid event' }];
 
@@ -125,17 +149,18 @@ function createCheckout({ secret, defects = [], now = () => Math.floor(Date.now(
     return [200, { received: true, fulfilled: order.id }];
   }
 
-  async function handle(req, res) {
-    const send = ([status, body]) => {
+  async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
+    const send = ([status, body]: Reply) => {
       res.writeHead(status, { 'content-type': 'application/json' });
       res.end(JSON.stringify(body));
     };
     try {
-      const url = new URL(req.url, 'http://localhost');
+      const url = new URL(req.url ?? '/', 'http://localhost');
       const parts = url.pathname.split('/').filter(Boolean);
-      const customer = req.headers['x-lab-customer'] || null;
+      const header = req.headers['x-lab-customer'];
+      const customer = typeof header === 'string' && header ? header : null;
       const raw = await readBody(req);
-      const json = () => { try { return JSON.parse(raw); } catch { throw httpError(400, 'invalid json'); } };
+      const json = () => { try { return JSON.parse(raw); } catch { throw new HttpError(400, 'invalid json'); } };
 
       if (req.method === 'GET' && url.pathname === '/catalog') return send([200, CATALOG]);
       if (req.method === 'POST' && url.pathname === '/orders') return send(createOrder(customer, json()));
@@ -151,11 +176,9 @@ function createCheckout({ secret, defects = [], now = () => Math.floor(Date.now(
       }
       send([404, { error: 'not found' }]);
     } catch (err) {
-      send(err.status ? [err.status, { error: err.message }] : [500, { error: 'internal error' }]);
+      send(err instanceof HttpError ? [err.status, { error: err.message }] : [500, { error: 'internal error' }]);
     }
   }
 
   return { handle, state };
 }
-
-module.exports = { createCheckout, CATALOG, CURRENCY, DEFECTS };

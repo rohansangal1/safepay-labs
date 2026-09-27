@@ -8,6 +8,26 @@ Search date: 27 September 2026. Scoped discovery review; bibliographic/abstract 
 4. **Protocol-Level Attacks on Agentic Commerce Platforms: A Cross-Platform Taxonomy, AIP-Bench, and Unified Defense (2026 preprint).** Adjacent agentic-commerce protocol benchmark; useful threat taxonomy but a different system population from ordinary web checkout. Treat claims as author-reported pending independent reproduction. [arXiv](https://arxiv.org/abs/2607.21824).
 5. **Park and Hastings, Weak Enforcement and Low Compliance in PCI DSS: A Comparative Security Study (2026 ISDFS journal reference listed on arXiv).** Governance context; not a technical payment-integration scanner and not evidence of vulnerability prevalence in a new website sample. [arXiv record](https://arxiv.org/abs/2512.13430).
 6. **Security analysis of third-party in-app payment in mobile applications (2019).** Adjacent mobile integration work combining static/dynamic analysis. Mobile findings cannot be generalized to modern web merchants without replication. [Publisher abstract](https://www.sciencedirect.com/science/article/abs/pii/S2214212619301632).
+7. **Stripe (2026), "Can AI agents build real Stripe integrations? We built a benchmark to find out."** Industry benchmark of coding agents on full-stack Stripe integrations, with deterministic graders over APIs, UI and Stripe-side artifacts. It measures whether integrations *work*. The post does not describe security, webhook-authenticity or adversarial evaluation. [Stripe blog](https://stripe.com/blog/can-ai-agents-build-real-stripe-integrations). Related: [Stripe steering experiments](https://stripe.dev/blog/ai-steering-experiments).
+8. **Vero et al., BaxBench: Can LLMs Generate Correct and Secure Backends? (2025 preprint).** Generated backends are checked with functional tests and then attacked with concrete exploits. This is the closest *method*: behavioral security testing of generated code. It covers generic backend vulnerabilities, not payment-specific multi-party state or money outcomes. [arXiv 2502.11844](https://arxiv.org/abs/2502.11844).
+9. **Endor Labs (2026), AI coding agent security benchmark.** Industry benchmark of security in agent-written code. Cited by Alipay-PIBench; not yet read in full. [Endor Labs](https://www.endorlabs.com/research/ai-code-security-benchmark).
+
+## Novelty matrix (27 Sep 2026)
+Based on the Alipay-PIBench full text (arXiv HTML, v4), the Stripe post and the BaxBench abstract. Recheck each entry against full texts and released artifacts before preregistration.
+
+| | Alipay-PIBench | Stripe benchmark | BaxBench | **This project** |
+|---|---|---|---|---|
+| Subjects | 6 agent models, 9 Alipay projects | Coding agents on Stripe tasks | LLMs, generic backends | Coding agents + 2–3 open-source shops |
+| Providers | Alipay only | Stripe only | None | **Stripe and Square** (cross-provider) |
+| Security asked for in the prompt? | Yes: separate "Advanced" hardening scenario | Not described | Varies | **Primary condition: no.** Realistic prompts that don't mention security, plus a paired condition that does |
+| How security is judged | Rubric pass rate; static, unit, integration and E2E checks, plus LLM-assisted judgment | Functional graders | Exploits against running apps | **Adversarial behavioral checks** with a sandbox-backed provider; no LLM judge |
+| Outcome measured | Rubric items passed | Task success | Exploit success | **Money and state harm** (ADR 002), separate from the score |
+| Missing evidence | Not modeled | Not modeled | Not modeled | **Explicit:** unknown ≠ pass; assurance range plus coverage |
+| Score validity tested? | No | No | No | **Yes:** does PIAS predict harm on held-out subjects? |
+
+**Defensible contribution.** Whether coding agents build payment integrations that resist forged, replayed, reordered and mismatched provider events when security isn't requested, across two providers. It is measured by money-level harm and paired with a validated evidence-aware score. Alipay-PIBench already shows that *asking* for hardening and providing a skill improve rubric scores. We should cite that and avoid claiming it.
+
+**Risks to novelty.** Stripe could publish security results from its benchmark. Alipay-PIBench could add cross-provider tasks. Move quickly, and position against both explicitly.
 
 ## Current implementation sources
 - [Stripe fulfillment](https://docs.stripe.com/payments/checkout/fulfill-orders): use authoritative payment completion and handle repeat fulfillment safely.

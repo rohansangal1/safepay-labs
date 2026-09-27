@@ -1,4 +1,4 @@
-'use strict';
+import { score } from './score.js';
 
 const REPO = 'https://github.com/rohansangal1/payment-integration-lab/blob/main/';
 const VIEWS = ['overview', 'benchmark', 'sandbox', 'roadmap', 'library', 'docs'];
@@ -10,12 +10,13 @@ const VERDICTS = {
 };
 const MILESTONE_STATUS = { 'done': 'Done', 'in-progress': 'In progress', 'not-started': 'Not started' };
 const DOCS = [
-  ['docs/RESEARCH_PLAN.md', 'Research protocol', 'Questions, threat model, datasets and study design.'],
-  ['docs/METRIC.md', 'Score specification', 'PIAS definition, control catalog, weights and gates.'],
-  ['docs/LITERATURE.md', 'Related work', 'Prior research and primary provider sources.'],
-  ['docs/SAFETY.md', 'Safety and compliance', 'Authorization rules, data handling and PCI boundaries.'],
-  ['docs/DATA_AND_TOOLS.md', 'Dataset and tooling', 'Dataset structure, splits and planned tooling.'],
-  ['docs/GITHUB_SETUP.md', 'Repository setup', 'Repository settings and the initial backlog.'],
+  ['docs/RESEARCH_PLAN.md', 'Research protocol', 'Research questions, subjects, harm oracle, analysis and milestones.'],
+  ['docs/METRIC.md', 'Score specification', 'PIAS definition, control catalog, gates and open questions for v1.'],
+  ['docs/LITERATURE.md', 'Related work', 'Prior research, primary sources and the novelty matrix.'],
+  ['docs/SAFETY.md', 'Safety and compliance', 'Authorization, untrusted generated code, data handling and disclosure.'],
+  ['docs/DATA_AND_TOOLS.md', 'Dataset and tooling', 'Dataset units, evidence records and execution architecture.'],
+  ['docs/decisions/README.md', 'Decision records', 'Why the project is shaped the way it is (ADRs).'],
+  ['docs/GITHUB_SETUP.md', 'Repository setup', 'CI, repository settings to enable and backlog.'],
 ];
 
 const $ = id => document.getElementById(id);
@@ -53,7 +54,7 @@ function buildFixtures(assessments) {
     provider: 'Local lab',
     architecture: 'Custom',
     results: run.results,
-    score: PIL.score(controls, run.results),
+    score: score(controls, run.results),
   }));
   const synthetic = Array.from({ length: 12 }, (_, i) => {
     const results = syntheticResults(i);
@@ -64,7 +65,7 @@ function buildFixtures(assessments) {
       provider: i % 2 ? 'Square' : 'Stripe',
       architecture: ['Hosted', 'Embedded', 'Custom'][i % 3],
       results,
-      score: PIL.score(controls, results),
+      score: score(controls, results),
     };
   });
   return [...lab, ...synthetic];
@@ -241,7 +242,7 @@ function renderScore() {
       b.setAttribute('aria-pressed', on);
     });
   });
-  const s = PIL.score(controls, sandbox);
+  const s = score(controls, sandbox);
   $('s-range').textContent = `${round(s.lower)}–${round(s.upper)}`;
   $('s-track-fill').style.left = (s.lower ?? 0) + '%';
   $('s-track-fill').style.width = ((s.upper ?? 0) - (s.lower ?? 0)) + '%';

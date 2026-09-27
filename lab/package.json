@@ -1,0 +1,11 @@
+{
+  "name": "@pias/lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Research lab: provider emulators, test subjects and harnesses. May use pinned dependencies.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@pias/core": "0.1.0"
+  }
+}
