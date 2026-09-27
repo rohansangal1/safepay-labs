@@ -1,0 +1,14 @@
+[
+  { "id": 1, "title": "Protocol v1", "detail": "Full-text literature extraction and novelty matrix; record exclusions.", "phase": "Define", "status": "in-progress" },
+  { "id": 2, "title": "Metric v1", "detail": "Explicit subchecks, independent oracle definitions and preregistration.", "phase": "Define", "status": "in-progress" },
+  { "id": 3, "title": "Owned checkout", "detail": "One reference checkout with a payment/order state database and no outbound fulfillment.", "phase": "Build", "status": "not-started" },
+  { "id": 4, "title": "Stripe sandbox adapter", "detail": "Authoritative completion and negative cases.", "phase": "Build", "status": "not-started" },
+  { "id": 5, "title": "Square sandbox adapter", "detail": "Provider-specific signature and lifecycle mapping.", "phase": "Build", "status": "not-started" },
+  { "id": 6, "title": "Browser harness", "detail": "Deterministic flows, bounded retries and navigation-inconclusive state.", "phase": "Build", "status": "not-started" },
+  { "id": 7, "title": "Evidence pipeline", "detail": "Redaction, hashes, scope IDs and retention enforcement.", "phase": "Build", "status": "not-started" },
+  { "id": 8, "title": "Safety runner", "detail": "Allowlisted egress, expiry, kill switch and live-mode rejection.", "phase": "Build", "status": "not-started" },
+  { "id": 9, "title": "Blind pilot", "detail": "Independently annotated defect/control profiles and held-out family split.", "phase": "Validate", "status": "not-started" },
+  { "id": 10, "title": "Architecture study", "detail": "Matched experiments and Pareto analysis.", "phase": "Compare", "status": "not-started" },
+  { "id": 11, "title": "External cohort", "detail": "Consent template, institutional determination and recruitment.", "phase": "Replicate", "status": "not-started" },
+  { "id": 12, "title": "Artifact release", "detail": "Reproducibility scripts, data card and coordinated disclosure review.", "phase": "Replicate", "status": "not-started" }
+]

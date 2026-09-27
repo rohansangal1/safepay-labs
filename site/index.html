@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment Integration Lab</title>
+  <meta name="description" content="Research workspace for the Payment Integration Assurance Score (PIAS).">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f5f8b'/%3E%3Cpath d='M10 23V9h7a5 5 0 010 10h-4' fill='none' stroke='%23fff' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="score.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#overview"><span class="logo">P</span>Payment Integration Lab</a>
+      <nav aria-label="Sections">
+        <a href="#overview">Overview</a>
+        <a href="#benchmark">Benchmark</a>
+        <a href="#sandbox">Score sandbox</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#library">Library</a>
+        <a href="#docs">Documents</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <p class="banner">All fixture results on this site are synthetic examples. No real merchant has been assessed.</p>
+
+    <!-- Overview -->
+    <section id="overview" class="view">
+      <div class="heading">
+        <h1>Research overview</h1>
+        <p>PIAS v0.1 — a draft score for how much evidence a payment integration provides for its security controls.</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span>Planned configurations</span><strong>3,072</strong><small>8 families × 3 architectures × 2 providers × 16 profiles × 4 seeds</small></div>
+        <div class="stat"><span>Controls</span><strong id="stat-controls">—</strong><small id="stat-critical">—</small></div>
+        <div class="stat"><span>Milestones done</span><strong id="stat-milestones">—</strong><small id="stat-milestones-sub">—</small></div>
+        <div class="stat"><span>Real assessments</span><strong>0</strong><small>Consented cohort is a later phase</small></div>
+      </div>
+
+      <div class="grid-2">
+        <article class="card">
+          <h2>Assurance range by fixture</h2>
+          <p class="muted">Bar spans lower to upper bound (0–100). Width is the uncertainty caused by unknown controls.</p>
+          <div id="range-chart" class="range-chart"></div>
+        </article>
+        <article class="card">
+          <h2>Control weights</h2>
+          <p class="muted">Draft weights sum to 100. Critical controls gate the verdict regardless of score.</p>
+          <div id="weight-chart" class="bar-chart"></div>
+        </article>
+      </div>
+
+      <article class="card">
+        <h2>Roadmap progress</h2>
+        <div class="progress" aria-hidden="true"><div id="progress-fill"></div></div>
+        <div id="phase-summary" class="phase-summary"></div>
+        <a class="link" href="#roadmap">Open roadmap →</a>
+      </article>
+    </section>
+
+    <!-- Benchmark -->
+    <section id="benchmark" class="view" hidden>
+      <div class="heading">
+        <h1>Benchmark explorer</h1>
+        <p>Twelve illustrative fixtures. Select one to see the control outcomes behind its score.</p>
+      </div>
+      <article class="card">
+        <div class="filters">
+          <label>Provider
+            <select id="f-provider"><option value="all">All</option><option>Stripe</option><option>Square</option></select>
+          </label>
+          <label>Architecture
+            <select id="f-arch"><option value="all">All</option><option>Hosted</option><option>Embedded</option><option>Custom</option></select>
+          </label>
+          <label>Verdict
+            <select id="f-verdict"><option value="all">All</option><option value="assessed">Assessed</option><option value="insufficient-evidence">Insufficient evidence</option><option value="critical-failure">Critical failure</option></select>
+          </label>
+          <span id="f-count" class="muted"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fixture</th><th>Provider</th><th>Architecture</th><th class="num">Range</th><th class="num">Coverage</th><th>Verdict</th></tr></thead>
+            <tbody id="fixture-rows"></tbody>
+          </table>
+        </div>
+      </article>
+      <article id="fixture-detail" class="card" hidden></article>
+    </section>
+
+    <!-- Score sandbox -->
+    <section id="sandbox" class="view" hidden>
+      <div class="heading">
+        <h1>Score sandbox</h1>
+        <p>Change control outcomes to see how the score responds. Changes are hypothetical and reset on reload.</p>
+      </div>
+      <div class="sandbox">
+        <article class="card">
+          <div class="card-head"><h2>Controls</h2><button id="reset" class="button">Reset</button></div>
+          <div id="control-list"></div>
+        </article>
+        <article class="card score-card">
+          <span class="label">Assurance range</span>
+          <div id="s-range" class="score-big">—</div>
+          <div class="score-track"><div id="s-track-fill"></div></div>
+          <dl>
+            <div><dt>Coverage</dt><dd id="s-coverage">—</dd></div>
+            <div><dt>Observed pass rate</dt><dd id="s-observed">—</dd></div>
+          </dl>
+          <div id="s-gate" class="verdict">—</div>
+          <p class="formula">Lower = passed ÷ applicable weight<br>Upper = (passed + unknown) ÷ applicable<br>Coverage = assessed ÷ applicable</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section id="roadmap" class="view" hidden>
+      <div class="heading">
+        <h1>Roadmap</h1>
+        <p>Milestones load from <code>site/data/milestones.json</code>. Edit a status there to update this page.</p>
+      </div>
+      <div id="milestone-board" class="board"></div>
+      <article class="card">
+        <h2>Research boundaries</h2>
+        <ul class="plain">
+          <li>Owned fixtures first; provider sandboxes for compatibility.</li>
+          <li>Written authorization for any partner testing.</li>
+          <li>Public-page observations cannot certify backend security.</li>
+          <li>No live charges, real card data or unsolicited active probing.</li>
+          <li>PIAS is not PCI certification.</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- Library -->
+    <section id="library" class="view" hidden>
+      <div class="heading">
+        <h1>Research library</h1>
+        <p>Related work and primary sources. Loaded from <code>site/data/library.json</code>.</p>
+      </div>
+      <div class="filters chips" id="library-filters"></div>
+      <div id="library-list" class="list"></div>
+    </section>
+
+    <!-- Documents -->
+    <section id="docs" class="view" hidden>
+      <div class="heading">
+        <h1>Documents</h1>
+        <p>Project documents live in the <code>docs/</code> folder of the repository.</p>
+      </div>
+      <div id="doc-list" class="list"></div>
+    </section>
+  </main>
+
+  <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+
+  <footer>Payment Integration Lab · PIAS v0.1 · Research prototype</footer>
+</body>
+</html>

@@ -1,5 +1,5 @@
 const {test}=require('node:test'); const assert=require('node:assert/strict');
-const {score}=require('../dashboard/dist/score.js');const controls=require('../dashboard/dist/controls.json');const {apply,demo}=require('../src/model.cjs');
+const {score}=require('../site/score.js');const controls=require('../site/data/controls.json');const {apply,demo}=require('../src/model.cjs');
 const all=status=>Object.fromEntries(controls.map(c=>[c.id,{status,evidence:'synthetic:test'}]));
 test('full pass and failure extremes',()=>{assert.equal(score(controls,all('pass')).lower,100);assert.equal(score(controls,all('fail')).upper,0);});
 test('unknown is not a pass or a failure',()=>{const r=score(controls,{});assert.equal(r.lower,0);assert.equal(r.upper,100);assert.equal(r.observed,null);assert.equal(r.gate,'insufficient-evidence');});

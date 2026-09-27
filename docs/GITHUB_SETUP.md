@@ -2,7 +2,7 @@
 Intended remote: https://github.com/rohansangal1/payment-integration-lab
 Keep private while metric and evidence handling mature. License selection and publication approval are owner decisions.
 
-Included: README, security policy, PR template, dependency-free CI, score tests, offline fixture model, manifest generator, dashboard and research documents. No keys or raw traces are required. The dashboard Sites identity is deployment metadata, not a secret.
+Included: README, security policy, PR template, dependency-free CI, score tests, offline fixture model, manifest generator, dashboard and research documents. No keys or raw traces are required.
 
 Suggested settings after first push: require PR review and passing Research checks on main; disallow force pushes; enable private vulnerability reporting when supported; enable secret scanning/push protection if available for the account/plan. These settings are recommendations, not already configured. Current workflow action tags should be pinned to reviewed immutable commit SHAs before using privileged CI or secrets.
 
