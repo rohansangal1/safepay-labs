@@ -31,6 +31,18 @@ npm run library:update  # search for new related work → data/library.json (als
 
 The code is TypeScript that Node runs directly through type stripping. `.npmrc` enables it for every npm script, so there's no build step ([ADR 004](docs/decisions/004-typescript-type-stripping.md)).
 
+## Analysis (Python)
+Statistics live in [`analysis/`](analysis/), managed by [uv](https://docs.astral.sh/uv/) with Python 3.12. It **reads** the run JSON in `data/runs/` and never writes back — data flows one way (Node → `data/runs` → Python).
+
+```sh
+cd analysis
+uv sync            # create .venv from the committed uv.lock
+uv run ruff check
+uv run pytest
+```
+
+`piaslab.loaders` turns lab runs into tidy DataFrames (and fails loudly if the run format changes); `piaslab.bootstrap` is the seeded cluster bootstrap for prevalence intervals. Notebooks are for exploration only — don't commit them with output cells.
+
 ## Research library
 `data/library.json` holds every related paper and primary source, one per line. Each has a `status`: `included` (with a `note`), `candidate` (found automatically, not yet screened) or `excluded` (with a `reason`, kept so it's never suggested again). `.github/workflows/library.yml` runs daily. It searches arXiv for the topics in `data/library-queries.json` and looks for papers citing entries marked `track_citations`. It also flags new versions of included preprints and dead links, then opens or updates one pull request with the changes. Nothing becomes `included` without a person deciding. `npm run build:site` rejects an invalid library.
 
