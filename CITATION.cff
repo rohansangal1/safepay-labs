@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this software or dataset, please cite it as below."
+title: "Payment Integration Lab: evidence-aware assurance measurement for payment integrations (PIAS)"
+type: software
+authors:
+  - given-names: Rohan
+    family-names: Sangal
+version: 0.1.0
+license: Apache-2.0
+repository-code: "https://github.com/rohansangal1/payment-integration-lab"
+keywords:
+  - payment security
+  - webhooks
+  - security measurement
+  - AI coding agents
+  - benchmark

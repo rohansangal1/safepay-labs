@@ -8,3 +8,5 @@ artifacts/
 *.har
 *.zip
 *.tar.gz
+node_modules/
+.vercel

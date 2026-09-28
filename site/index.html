@@ -7,8 +7,7 @@
   <meta name="description" content="Research workspace for the Payment Integration Assurance Score (PIAS).">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f5f8b'/%3E%3Cpath d='M10 23V9h7a5 5 0 010 10h-4' fill='none' stroke='%23fff' stroke-width='3'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
-  <script defer src="score.js"></script>
-  <script defer src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -26,20 +25,20 @@
   </header>
 
   <main>
-    <p class="banner">All fixture results on this site are synthetic examples. No real merchant has been assessed.</p>
+    <p class="banner">Lab runs come from the local reference checkout; F-fixtures are synthetic examples. No real merchant has been assessed.</p>
 
     <!-- Overview -->
     <section id="overview" class="view">
       <div class="heading">
         <h1>Research overview</h1>
-        <p>PIAS v0.1 — a draft score for how much evidence a payment integration provides for its security controls.</p>
+        <p>Do AI coding agents build safe payment integrations? Measured with a harm oracle and PIAS v0.1, a draft evidence-aware assurance score.</p>
       </div>
 
       <div class="stats">
-        <div class="stat"><span>Planned configurations</span><strong>3,072</strong><small>8 families × 3 architectures × 2 providers × 16 profiles × 4 seeds</small></div>
+        <div class="stat"><span>Planned subjects</span><strong>~200</strong><small>Agent-built Stripe and Square checkouts, size fixed after the pilot</small></div>
         <div class="stat"><span>Controls</span><strong id="stat-controls">—</strong><small id="stat-critical">—</small></div>
         <div class="stat"><span>Milestones done</span><strong id="stat-milestones">—</strong><small id="stat-milestones-sub">—</small></div>
-        <div class="stat"><span>Real assessments</span><strong>0</strong><small>Consented cohort is a later phase</small></div>
+        <div class="stat"><span>Lab runs</span><strong id="stat-lab">0</strong><small>Local checkout · 0 real merchant assessments</small></div>
       </div>
 
       <div class="grid-2">
@@ -67,12 +66,15 @@
     <section id="benchmark" class="view" hidden>
       <div class="heading">
         <h1>Benchmark explorer</h1>
-        <p>Twelve illustrative fixtures. Select one to see the control outcomes behind its score.</p>
+        <p>Lab runs against the local reference checkout, plus illustrative fixtures. Select a row to see the evidence behind its score.</p>
       </div>
       <article class="card">
         <div class="filters">
+          <label>Source
+            <select id="f-source"><option value="all">All</option><option value="lab">Lab runs</option><option value="synthetic">Synthetic</option></select>
+          </label>
           <label>Provider
-            <select id="f-provider"><option value="all">All</option><option>Stripe</option><option>Square</option></select>
+            <select id="f-provider"><option value="all">All</option><option>Local lab</option><option>Stripe</option><option>Square</option></select>
           </label>
           <label>Architecture
             <select id="f-arch"><option value="all">All</option><option>Hosted</option><option>Embedded</option><option>Custom</option></select>
@@ -84,7 +86,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Fixture</th><th>Provider</th><th>Architecture</th><th class="num">Range</th><th class="num">Coverage</th><th>Verdict</th></tr></thead>
+            <thead><tr><th>Fixture</th><th>Source</th><th>Provider</th><th>Architecture</th><th class="num">Range</th><th class="num">Coverage</th><th>Verdict</th></tr></thead>
             <tbody id="fixture-rows"></tbody>
           </table>
         </div>

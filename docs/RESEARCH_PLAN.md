@@ -1,67 +1,103 @@
-# Research protocol — draft 0.1
-Prepared 27 September 2026. Working title: **Measuring Payment Integration Assurance Under Partial Observability**.
+# Research protocol — draft 0.2
 
-## Contribution and scope
-Investigate whether a provider-neutral, evidence-aware control score predicts independently observed payment invariant violations, and how architecture affects security, recovery and implementation effort. This is a proposal, not a validated score or prevalence study. The literature review is a scoped search, not an exhaustive systematic review.
+Revised 27 September 2026. Supersedes draft 0.1 (8 self-written template families). The reasons are recorded in [ADR 001](decisions/001-research-headline.md) and [ADR 002](decisions/002-harm-oracle.md).
 
-The likely contribution is a reproducible cross-provider benchmark, explicit treatment of missing evidence, and validation of a score against independent behavioral outcomes. Do not claim to invent payment integration testing: Wang et al. (2011), Sudhodanan et al. (2016), and Alipay-PIBench (2026) directly precede this work. See LITERATURE.md.
+Working title: **Do AI Coding Agents Build Safe Payment Integrations? Measuring Money-Level Harm and Evidence-Aware Assurance Across Providers**
 
-Initial scope: web checkout and merchant fulfillment, using Stripe and Square-compatible sandbox integrations; hosted, embedded and custom tokenized architectures. Exclude raw card handling, live financial transactions, mobile reverse engineering, agentic payment protocols, cryptocurrency and real disputes in the first study.
+## Contribution
+Coding agents now write payment integrations routinely. Prior work measures whether they produce *working* integrations (Stripe, 2026), whether they satisfy a hardening rubric when *asked to* (Alipay-PIBench, 2026), or whether generic backends resist exploits (BaxBench, 2025). See the [novelty matrix](LITERATURE.md#novelty-matrix-27-sep-2026).
+
+We contribute:
+1. **A cross-provider adversarial benchmark.** Agent-built Stripe and Square integrations are attacked with forged, replayed, reordered and mismatched provider events, mostly when security was *not* requested.
+2. **A harm oracle.** Outcomes are measured in money and state (underpayment, double fulfillment, cross-account access, lost or inconsistent orders), not rubric items.
+3. **A validated evidence-aware score (PIAS).** It keeps unobserved controls visible, and we test whether it predicts harm on held-out subjects.
+4. **An open tool and dataset:** zero-dependency engine, checks and CLI; generated subjects, prompts and results.
+
+This is a proposal. Nothing here is a finding yet.
 
 ## Research questions
-1. Does PIAS predict independent, held-out violations better than a generic checklist, browser-only indicators, or a simple count of passed controls?
-2. How much does a browser-only assessment miss compared with backend plus provider evidence? Is the score stable under realistic missingness?
-3. Which architecture/control combinations improve assurance and recovery for a fixed engineering budget?
-4. Does the rubric transfer between providers, template families and independently implemented applications?
+- **RQ1 Prevalence.** When security isn't requested, how often do agent-built integrations allow money-level harm? How does that vary by agent, provider and checkout architecture?
+- **RQ2 Prompting.** How much does explicitly requesting security change harm outcomes (paired design)?
+- **RQ3 Validity.** Does PIAS, computed from control checks, predict harm-oracle outcomes on held-out subjects? Is it better than simple baselines: pass count, equal weights, no critical gate?
+- **RQ4 Observability.** How much harm does a browser-only assessment miss compared with backend plus provider evidence?
+- **RQ5 External validity.** Do the same failure modes appear in the payment integrations of maintained open-source e-commerce platforms?
 
-Hypotheses to preregister: critical-gated, evidence-aware reporting yields fewer falsely reassuring assessments than an undifferentiated pass percentage; server verification plus atomic fulfillment suppresses state inconsistency across architectures; architecture alone is a weaker predictor than implemented controls. These are hypotheses, not findings.
+Hypotheses to preregister, not findings: (H1) a majority of unprompted agent integrations fail at least one critical control; (H2) requesting security reduces but doesn't eliminate harm; (H3) the PIAS lower bound ranks subjects by harm better than a pass count; (H4) browser-only assessment misses most webhook-layer harm.
+
+## Subjects
+
+### AI-generated integrations (main set)
+- **Starter shop.** A small, fixed codebase with a catalog, customer identity, an orders database and a `fulfillOrder()` business action, but no payments. Agents add payments to it. Because the fulfillment table and identity model are fixed, the harness and harm oracle work the same way on every generated app, whatever code the agent writes.
+- **Factors:**
+
+  | Factor | Levels |
+  |---|---|
+  | Agent | 4–6 coding agents (to be chosen) |
+  | Provider | Stripe, Square |
+  | Architecture | hosted (Stripe Checkout / Square payment links), embedded (Stripe Payment Element / Square Web Payments SDK) |
+  | Prompt | P0: realistic request with no mention of security; P1: the same request plus explicit security requirements |
+  | Samples | k independent generations per cell |
+
+- **Size:** for example, 5 agents × 2 × 2 × 2 × k=5 is 200 subjects. Fix the number after the pilot. Clusters for inference are agent × prompt, not individual apps.
+- **Provenance recorded per subject:** agent, model ID, tool version, date, exact prompt, full transcript where available, token/cost, wall time, and the commit of the generated code. Subjects that fail to run are counted and reported as build failures, never dropped silently.
+
+### Open-source shops (realism check)
+Two or three maintained platforms with Stripe and/or Square support (candidates: Saleor, Medusa, Solidus, Sylius, WooCommerce + official plugin). Each runs locally in Docker against our own sandbox accounts. Results are analyzed separately from the agent set, and any finding goes through coordinated disclosure before publication ([ADR 006](decisions/006-public-site-and-publishing.md)).
+
+### Reference checkout (calibration)
+`lab/subjects/reference` is a known-good subject. Its seeded and mutated variants calibrate each check: every check must fail on a subject that lacks the control. Calibration subjects are never counted in RQ1–RQ5.
 
 ## Threat and observation model
-Actors: customer browser, merchant application, merchant database/job system, payment provider, webhook ingress and third-party scripts. Trust boundaries: browser/server, server/provider, webhook/worker and account/order ownership. Assume an adversary can control its own client inputs and retry timing; do not assume compromise of processor infrastructure or secret keys.
+**Actors:** customer browser, merchant application, merchant database/jobs, payment provider, webhook ingress.
+**Trust boundaries:** browser/server, server/provider, webhook/worker, account/order ownership.
+**Adversary:** controls its own client inputs, account and request timing; can replay or forge webhook requests at the merchant's endpoint; can create real sandbox payments for arbitrary amounts. The adversary does *not* compromise the provider or steal merchant secrets.
 
-Security invariants: an order is fulfilled only against a verified successful payment for its server-authoritative amount, currency, merchant and order; a logical payment/order action occurs at most once; one customer cannot control another customer's order; invalid or reordered events do not promote state; refunds and recovery reconcile according to explicit business rules. Test partial captures and refunds separately where supported.
+**Invariants.** An order is fulfilled only against a verified successful payment for its server-authoritative amount, currency and order. Each logical payment has at most one economic effect. One customer can't read or act on another's order. Invalid, stale or reordered events don't promote state. Refunds and recovery leave order and payment consistent.
 
-DevTools/CDP and Playwright observe browser requests, responses, frames and navigation. They cannot directly observe merchant-to-provider API calls, private databases or webhook processing. Absence of browser-visible evidence is not proof a backend check is absent. Instrument owned/consented servers and correlate redacted traces with provider sandbox objects and fulfillment records. Browser-only results receive a surface profile, not a full assurance verdict.
+**Observation layers.** Browser tooling sees requests, frames and navigation, but not merchant-to-provider calls, the database or webhook processing. Absence of browser-visible evidence isn't proof a backend check is absent. Each result states its observation layer. Browser-only results are reported as a separate profile, never mixed with full-evidence results (RQ4).
 
-## Three distinct datasets
-A. **Controlled benchmark:** 8 independently implemented template families × 3 architecture variants × 2 provider adapters × 16 defect/control profiles × 4 seeded event schedules = 3,072 configuration records. This starter generates the manifest only. Thousands of configurations are not thousands of independent websites. Each family needs genuinely distinct implementation choices; copying layouts does not create independence.
-B. **Consented validation cohort:** recruit approximately 20–50 owners for staging/sandbox replicas with explicit permission. Recruitment size is provisional, then refined by pilot variance and power analysis. Report selection and volunteer bias.
-C. **Optional public-surface census:** approximately 1,000–3,000 domains to describe observable checkout types and client assets, only after access/terms/privacy review. No purchases, checkout submission, webhook requests, request mutation, account creation, access-control testing or vulnerability scoring without written authorization. Prefer licensed metadata or owner-provided traces. Keep this cohort analytically separate from A and B.
+## Measurement
 
-## Experimental design
-Start with one clean reference application and one known defect per control. Demonstrate that each defect is observable with its assigned oracle before expanding. The 16 profiles should include a clean baseline, individually seeded defects and a small preregistered set of interactions; the manifest's profile numbers are placeholders until these definitions are frozen.
+### Control checks → PIAS
+Adversarial checks per control (see [METRIC.md](METRIC.md)), run against real sandbox payments plus harness-generated deliveries: unsigned, wrong-key, stale, tampered, replayed, reordered, cross-order and amount/currency-mismatched events, and cross-account requests. Each check has an ID, control, observation layer and version in a registry. Results are evidence records ([DATA_AND_TOOLS.md](DATA_AND_TOOLS.md)).
 
-Compare hosted, embedded and custom tokenized checkout under matched catalog, prices, identity model, database semantics, event schedules and load. Where provider capabilities differ, document the mapping or mark the comparison unsupported rather than fabricate parity. Fully crossed 3,072 cells are a target, subject to this compatibility gate.
+### Harm oracle (separate)
+End-to-end scenarios frozen before the main study. For each scenario the oracle reads the provider sandbox ledger and the starter shop's fulfillment table:
 
-Use deterministic browser workflows first. An AI UI driver can suggest selectors or explore owned fixture variations, but must never assign the final vulnerability label or decide authorization. Record flow completion separately from security: navigation failure is an inconclusive run, not a vulnerability. Bound time, retries and requests.
+| Harm | Measured as |
+|---|---|
+| Underpayment | Order value fulfilled minus amount captured for that order > 0 |
+| Double fulfillment | More than one fulfillment for an order |
+| Cross-account | A second identity reads, pays, refunds or fulfills another's order |
+| Lost order | Captured payment with no fulfillment after the recovery window |
+| Inconsistent refund | Refunded or canceled payment with the order still fulfilled or active |
 
-Injected cases in owned labs: inconsistent amount/order binding, invalid event origin, duplicate delivery, event reordering, delayed success, cancellation, refund transitions, dropped events and simulated worker crashes. No production payload generator or arbitrary-target runner is provided.
+Primary outcome: **any harm** per subject (binary), plus harm counts by type. The harm oracle never contributes to the score.
 
-Primary outcome: independently adjudicated invariant violation per fixture and scenario, measured from merchant database effects and provider sandbox state. Secondary outcomes: recovery delay, duplicate effects, checkout completion, false-positive/false-negative rate, evaluation time and engineering effort. The score cannot validate itself by predicting the same control labels used to calculate it.
+## Analysis plan
+- **RQ1:** harm prevalence by agent, provider and architecture, with cluster-bootstrap 95% intervals. A logistic mixed model with random intercepts for agent × prompt, only if the pilot shows the data supports it.
+- **RQ2:** paired P0 vs P1 differences within agent × provider × architecture, with bootstrap intervals and multiple-comparison adjustment.
+- **RQ3:** discrimination of the PIAS lower bound for any-harm (AUROC, PR-AUC) under leave-one-agent-out cross-validation. Compared against pass count, equal weights and no critical gate. Sensitivity: weights ±20%, coverage threshold 60–90%, idempotency critical or not.
+- **RQ4:** harm detected by browser-only vs full evidence; recall of browser-only relative to full.
+- **RQ5:** descriptive; failure-mode taxonomy compared with the agent set.
+- **Blinding:** the adjudicator reviewing inconclusive runs sees evidence, not agent identity or prompt condition.
+- **Freezing:** the rubric, checks, harm scenarios, weights and exclusion rules are preregistered on OSF after the pilot and before the main run. Deviations are reported.
+- **Exclusions**, preregistered: build failures, provider outages, unsupported capability. All are reported with denominators.
 
-## Validation and statistical analysis
-- Freeze rubric, critical gates, baseline weights and inclusion rules before the held-out evaluation. Preserve score version and source commit on every result.
-- Split by implementation family: F1–F5 development, F6 validation, F7–F8 held-out; keep all architectures, mutations and schedule seeds for a family in the same split. This is only 8 clusters; expand families before making broad statistical claims.
-- Add leave-one-family-out and provider holdout analyses as sensitivity checks. Avoid training on near-clones of test cases or tuning weights to the final test set.
-- Use independent annotators blinded to score and seeded profile, reconcile disagreements, report inter-rater agreement and reasons for inconclusive evidence.
-- Report precision, recall, F1 and PR-AUC for finding detection; confidence intervals clustered by family. For score validity, use held-out rank association and discrimination against independently measured harm. A probability-of-failure claim requires separate calibration and adequate data.
-- Use paired architecture comparisons, effect sizes and cluster bootstrap intervals; adjust multiple comparisons. Use mixed-effects analysis only if sample size and model assumptions justify it.
-- Compare equal weights, expert weights, no critical gates, browser-only and full instrumentation. Vary draft weights ±20%, coverage thresholds and missingness patterns; report rank reversals.
-- Preregister exclusions (provider outages, unsupported capability, bot failure) and report denominators and missingness by architecture/provider. Do not silently discard failed runs.
-- Pilot 24–60 cells to estimate variance, detection quality and run cost before selecting final sample size. Benchmark defect prevalence is deliberately artificial and cannot estimate production prevalence.
+## Milestones and exit gates
+| Phase | Weeks | Exit gate |
+|---|---|---|
+| 0 Foundation | 1 | Restructured repo, CI green, decisions recorded, novelty matrix |
+| 1 Measurement core | 1–3 | SubjectAdapter, check registry, evidence schema, sqlite reference checkout, checks for all feasible controls, harm oracle; mutation-detection rate reported |
+| 2 Realism | 3–5 | Stripe/Square emulators conform to recorded sandbox events; reference checkout passes against both real sandboxes; browser harness |
+| 3 Subjects and pilot | 4–7 | Starter shop and prompts frozen; generator harness; 2–3 open-source shops running; pilot of 15–20 subjects; reviewer recruited; OSF preregistration |
+| 4 Main study | 7–10 | All subjects run, exclusions accounted for, analysis reproducible from `data/runs` |
+| 5 Release | 10–12 | Preprint, CLI v0.1 + GitHub Action, dataset, public site |
 
-## Architecture hypothesis and evaluation
-Hosted checkout plus server-created orders, authenticated provider completion, atomic/idempotent fulfillment and reconciliation is a practical reference architecture to test. Embedded components and custom tokenized flows can also satisfy these properties. There is no experimentally established optimum yet. Plot a Pareto frontier of invariant failure rate, recovery time, p95 latency and engineer hours, stratified by comparable business requirements. Do not call the largest weighted security score universally optimal.
+Twelve weeks is a planning estimate for one person, not a promise. Any open-source finding extends the timeline by its disclosure period.
 
-## Proposed milestones and exit gates
-Weeks 1–2: ethics/jurisdiction determination, literature full-text extraction, threat model and preregistration. Exit: approved scope and frozen pilot rubric.
-Weeks 3–4: reference fixtures, two sandbox adapters, durable evidence oracle. Exit: clean baseline and each single defect reproducible.
-Weeks 5–6: blind pilot, missingness and leakage checks. Exit: error analysis and a documented revised/frozen v1 rubric.
-Weeks 7–9: batch execution of approved matrix, resource tracking and architecture analysis. Exit: reproducible results with exclusions accounted for.
-Weeks 10–12: optional consented external validation, robustness checks and paper/artifact. External cohort timing depends on recruitment and approvals.
-
-## Resources and feasibility
-Initial team: one implementation lead plus one independent security/research reviewer, with institutional/legal support for external work. A 12-week schedule is a planning estimate, not a delivery promise. At 3,072 cells × 3 repeats × 90 seconds, browser work alone is about 230 worker-hours. Measure actual duration and provider quotas in the pilot; price compute using the chosen platform at that time. Do not infer sample size from available compute alone.
+## Out of scope for the preprint
+Consented merchant cohort, public-web census, engineer-hours architecture study, mobile apps, agentic-commerce protocols, raw card handling, production or live-mode testing of any kind. These are future work; see [SAFETY.md](SAFETY.md) for the gates they'd need.
 
 ## Current implementation boundary
-The repository contains a dashboard, draft score engine, configuration generator, offline toy state model and tests. It does not yet contain 8 deployed templates, provider SDK adapters, a browser bot, a collection scheduler, live evidence, persistent dashboard storage, or validated findings. Those are the next research milestones.
+Implemented: PIAS engine and control catalog (`packages/core`); a local reference checkout with a fake provider, 19 checks across 6 controls and 7 seeded defects (`lab/`); the research site. Not yet built: SubjectAdapter, check registry, harm oracle, real-provider emulators and sandbox mode, browser harness, starter shop, generator, open-source subjects, analysis code.

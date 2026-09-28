@@ -180,13 +180,13 @@ main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; }
 
 .axis {
   display: flex; justify-content: space-between;
-  margin-left: 44px; margin-right: 152px;
+  margin-left: 56px; margin-right: 152px;
   font-size: 11px; color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 .range-row {
   display: grid;
-  grid-template-columns: 36px 1fr 144px;
+  grid-template-columns: 48px 1fr 144px;
   gap: 8px;
   align-items: center;
   padding: 3px 0;
@@ -241,13 +241,14 @@ main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; }
 .progress div { height: 100%; background: var(--accent); border-radius: 999px; }
 .phase-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
 .phase-summary div {
+  gap: 8px;
   display: flex; justify-content: space-between;
   font-size: 13px; color: var(--text-2);
   background: var(--surface-2);
   border-radius: 7px;
   padding: 6px 10px;
 }
-.phase-summary b { color: var(--text); font-variant-numeric: tabular-nums; }
+.phase-summary b { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---------- Tables ---------- */
 
@@ -275,6 +276,10 @@ tbody tr:last-child td { border-bottom: 0; }
 tbody tr[data-id] { cursor: pointer; }
 tbody tr[data-id]:hover, tbody tr[data-id]:focus { background: var(--surface-2); outline: none; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
+td .sub { display: block; font-size: 12px; color: var(--muted); }
+ul.checks { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; font-size: 12px; color: var(--text-2); }
+ul.checks .ok::first-letter { color: var(--good-ink); }
+ul.checks .bad { color: var(--critical-ink); }
 
 .verdict, .outcome {
   display: inline-flex; align-items: center; gap: 6px;
@@ -389,7 +394,7 @@ footer {
 }
 @media (max-width: 520px) {
   .stats { grid-template-columns: minmax(0, 1fr); }
-  .range-row { grid-template-columns: 36px 1fr; }
+  .range-row { grid-template-columns: 48px 1fr; }
   .range-verdict { display: none; }
   .axis { margin-right: 0; }
   .control { flex-direction: column; align-items: flex-start; }

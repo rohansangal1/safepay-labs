@@ -1,16 +1,16 @@
 # Dataset and tooling design
 
 ## Dataset units
-Distinguish template family, implementation variant, configuration, run, test case and finding. The current generator makes 3,072 configuration records only. It does not deploy sites or run provider integrations. The 12 dashboard examples are separate illustrative control labels, not observations from that manifest or outputs from the offline toy model.
+Distinguish subject, run, check, harm scenario and finding. A **subject** is one runnable integration: an agent-generated app, an open-source shop or a calibration variant of the reference checkout (see [RESEARCH_PLAN.md](RESEARCH_PLAN.md#subjects)). The site's 12 synthetic F-fixtures are illustrative labels, not subjects.
 
-Each configuration carries family, architecture, provider, profile, schedule seed, split and execution status. Each future run adds commit SHA, dependency lock hash, provider API/SDK versions, instrument version, metric version, scope authorization ID/expiry, collection start/end, infrastructure version, navigation outcome and exclusion reason. Keep unit identifiers stable across reruns.
+Each subject carries its source (agent, open-source or calibration), provider, architecture, prompt condition, generation provenance and split. Each run adds commit SHA, dependency lock hash, provider API/SDK versions, instrument version, metric version, scope authorization ID/expiry, collection start/end, infrastructure version, navigation outcome and exclusion reason. Keep unit identifiers stable across reruns.
 
 Proposed evidence record:
 ```json
 {
   "schema_version": "1.0-draft",
   "run_id": "synthetic-run-001",
-  "fixture_id": "F1-hosted-stripe-M0-S0",
+  "subject_id": "agent-x/stripe/hosted/P0/s1",
   "test_id": "duplicate-completion",
   "control_id": "idempotency",
   "status": "unknown",
@@ -42,18 +42,18 @@ Null evidence is unknown, never pass. Separate true seeded defect labels from as
 | CI and provenance | GitHub Actions, pinned releases and container digests | Run unit/model tests; do not put external scanners into default CI |
 | Review | Human adjudication plus source/config review | Resolve inconclusive or conflicting evidence; blind to seeded defect labels |
 
-Only the static dashboard, Node score/model/generator and dependency-free tests are installed/implemented. Other tools are recommendations for the next milestone. Verify maintained releases and pin versions when adopting them; no arbitrary package versions have been asserted here.
+Implemented so far: the PIAS engine (`packages/core`), the local reference checkout on `node:sqlite` with a transactional fulfillment outbox, a fake provider and seeded defects (`lab/`), the static site and CI. Other tools are recommendations for later phases. Verify maintained releases and pin versions when adopting them; no arbitrary package versions have been asserted here.
 
 ## Execution architecture to build
-Scope gate → scheduler → isolated browser worker → owned checkout fixture → sandbox adapter.
-Browser, merchant database and provider events → allowlisted evidence collector → invariant oracle → versioned scorer → research dataset/dashboard.
+Scope gate → scheduler → subject (starter-shop app, open-source shop or reference) → SubjectAdapter → sandbox or emulator.
+Browser, merchant database and provider events → allowlisted evidence collector → invariant oracle → versioned scorer → research dataset and site.
 
-Use a durable queue and atomic database transaction/outbox for real fixture fulfillment. Deduplicate by the business action as well as provider event identity: separate events can refer to one payment/order. Handle crash recovery, retries and delayed state without trusting the return page. The offline toy model is intentionally much smaller and lacks cryptography, persistence, real concurrency and provider adapters; it is not production payment code.
+Use a durable queue and atomic database transaction/outbox for reference fulfillment. Deduplicate by the business action as well as provider event identity: separate events can refer to one payment/order. Handle crash recovery, retries and delayed state without trusting the return page. The reference checkout is lab code for calibration, not production payment code.
 
 ## Validation sequence
-1. Verify scorer edge cases and synthetic model detection (implemented).
-2. One reference checkout, one provider sandbox, clean/defect pair and verified evidence chain.
-3. Add the second provider and architecture variants; freeze capability mapping.
-4. Pilot blind assessment and collector redaction/egress tests.
-5. Scale the approved matrix; publish manifest, actual completion counts, exclusions and cost.
-6. Add opt-in external staging only after scope and institutional gates.
+1. Scorer edge cases; reference checkout with seeded defects, each caught only by its own control (implemented).
+2. Check registry, evidence records and harm oracle; detection rate on automatically mutated variants.
+3. Stripe and Square emulators conformance-tested against recorded sandbox events; reference passes against both real sandboxes.
+4. Starter shop, frozen prompts and generator; pilot of 15–20 subjects with blind adjudication and redaction/egress tests.
+5. Main study; publish the subject manifest, completion counts, exclusions and cost.
+6. External merchant staging only in future work, after scope and ethics gates.

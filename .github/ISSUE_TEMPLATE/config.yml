@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security issue privately
+    url: https://github.com/rohansangal1/payment-integration-lab/security/advisories/new
+    about: Vulnerabilities in this project or findings about third-party software. Never file these as public issues.
