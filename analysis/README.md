@@ -20,3 +20,11 @@ uv run pytest      # tests
 - `tests/` — pytest over the above using a synthetic fixture; no network, no external data.
 
 Notebooks are for exploration only. Do not commit notebooks with output cells.
+
+## Library exploratory analysis
+Bibliometric/thematic view of `data/library.json` — coverage, timeline, themes and their
+intersections — regenerated on demand (outputs are git-ignored, like the site build):
+
+```sh
+uv run python -m piaslab.library_report   # → analysis/reports/library/
+```
