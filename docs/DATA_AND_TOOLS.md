@@ -42,7 +42,7 @@ Null evidence is unknown, never pass. Separate true seeded defect labels from as
 | CI and provenance | GitHub Actions, pinned releases and container digests | Run unit/model tests; do not put external scanners into default CI |
 | Review | Human adjudication plus source/config review | Resolve inconclusive or conflicting evidence; blind to seeded defect labels |
 
-Implemented so far: the PIAS engine (`packages/core`), the local reference checkout on `node:sqlite` with a transactional fulfillment outbox, a fake provider and seeded defects (`lab/`), the static site and CI. Other tools are recommendations for later phases. Verify maintained releases and pin versions when adopting them; no arbitrary package versions have been asserted here.
+Implemented so far: the PIAS engine (`packages/core`), the SubjectAdapter interface and versioned check registry (`packages/checks`), the local reference checkout on `node:sqlite` with a transactional fulfillment outbox, a fake provider and seeded defects (`lab/`), the static site and CI. Other tools are recommendations for later phases. Verify maintained releases and pin versions when adopting them; no arbitrary package versions have been asserted here.
 
 ## Execution architecture to build
 Scope gate → scheduler → subject (starter-shop app, open-source shop or reference) → SubjectAdapter → sandbox or emulator.

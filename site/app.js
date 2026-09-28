@@ -206,7 +206,7 @@ function showFixture(id) {
       <tbody>${controls.map(c => {
         const r = f.results[c.id] || NOT_ASSESSED;
         const checks = (r.checks || []).map(k =>
-          `<li class="${k.pass ? 'ok' : 'bad'}">${k.pass ? '✓' : '✗'} ${esc(k.description)}${k.pass ? '' : ` <span class="muted">(expected ${esc(k.expected)}, observed ${esc(k.observed)})</span>`}</li>`).join('');
+          `<li class="${k.pass ? 'ok' : k.error ? '' : 'bad'}">${k.pass ? '✓' : k.error ? '?' : '✗'} ${esc(k.description)}${k.pass ? '' : k.error ? ` <span class="muted">(could not run: ${esc(k.error)})</span>` : ` <span class="muted">(expected ${esc(k.expected)}, observed ${esc(k.observed)})</span>`}</li>`).join('');
         return `<tr><td>${esc(c.title)}${c.critical ? ' <em class="tag">critical</em>' : ''}</td><td class="num">${c.weight}</td><td><span class="outcome ${r.status}">${r.status}</span></td><td><code>${esc(r.evidence)}</code>${checks ? `<ul class="checks">${checks}</ul>` : ''}</td></tr>`;
       }).join('')}</tbody>
     </table></div>`;

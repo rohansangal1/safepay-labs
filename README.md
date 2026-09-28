@@ -8,14 +8,15 @@ Status: research in progress, targeting a preprint. PIAS v0.1 is a draft metric,
 | Path | What's there | Dependencies |
 |---|---|---|
 | `packages/core/` | PIAS score engine and control catalog | None (runtime) |
+| `packages/checks/` | Versioned check registry, `SubjectAdapter` interface and runner | None (runtime) |
 | `lab/emulator/` | Fake payment provider: event builder and HMAC webhook signing | None so far |
-| `lab/subjects/reference/` | Local reference checkout, 19 invariant checks, 7 seeded defects | None so far |
+| `lab/subjects/reference/` | Local reference checkout, its adapter, 7 seeded defects | None so far |
 | `data/runs/` | Assessment results (generated) | |
 | `site/` | Research website (static) | |
 | `scripts/` | Build helpers | |
 | `docs/` | Protocol, metric, literature, safety, [decisions](docs/decisions/README.md) | |
 
-Planned: `packages/checks` and `packages/cli` (zero-dependency), `lab/generator` and `lab/harness`, `analysis/` (Python). See [ADR 003](docs/decisions/003-dependencies-and-layout.md).
+Planned: `packages/cli` (zero-dependency), `lab/generator` and `lab/harness`, `analysis/` (Python). See [ADR 003](docs/decisions/003-dependencies-and-layout.md).
 
 ## Setup
 Requires **Node.js 22.13+** (24 recommended, see `.nvmrc`) and Python 3 for the local site server. No provider keys are needed.
@@ -45,7 +46,7 @@ The code is TypeScript that Node runs directly through type stripping. `.npmrc` 
 
 State lives in `node:sqlite`. A verified success event records the payment and a fulfillment job in one transaction; the job then runs from that outbox. If fulfillment fails or the process stops, the job stays pending and runs on the next event or restart. Unique indexes allow one fulfillment per order, however many events arrive.
 
-`npm run assess` runs 19 invariant checks mapped to six PIAS controls (amount, binding, authenticity, fulfillment, authorization, idempotency). The oracle is the checkout's fulfillment records, not its HTTP responses. The baseline passes all six. It's rated *insufficient evidence* because the other six controls have no checks yet. Each of the seven seeded defects (`DEFECTS` in `app.ts`) is caught by its own control and no other, and the tests enforce this.
+`npm run assess` runs the 19 registered checks in `packages/checks` through the checkout's `SubjectAdapter` ([adapter.ts](lab/subjects/reference/adapter.ts)). They map to six PIAS controls (amount, binding, authenticity, fulfillment, authorization, idempotency). Each check is versioned and records its observation layer and oracle; the webhook checks read the checkout's fulfillment records, not its HTTP responses. A check that can't run leaves its control unknown, never passed. The baseline passes all six. It's rated *insufficient evidence* because the other six controls have no checks yet. Each of the seven seeded defects (`DEFECTS` in `app.ts`) is caught by its own control and no other, and the tests enforce this.
 
 To explore by hand:
 ```sh

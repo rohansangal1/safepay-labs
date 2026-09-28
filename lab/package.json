@@ -6,6 +6,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "dependencies": {
+    "@pias/checks": "0.1.0",
     "@pias/core": "0.1.0"
   }
 }
