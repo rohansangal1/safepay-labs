@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { stripTypeScriptTypes } from 'node:module';
+import { serialize, validate, type Entry } from './library.ts';
 
 const root = path.join(import.meta.dirname, '..');
 const from = (...p: string[]) => path.join(root, ...p);
@@ -15,4 +16,10 @@ fs.mkdirSync(from('site/data'), { recursive: true });
 fs.copyFileSync(from('packages/core/src/controls.json'), from('site/data/controls.json'));
 fs.copyFileSync(from('data/runs/lab-reference.json'), from('site/data/assessments.json'));
 
-console.log('Built site/score.js, site/data/controls.json, site/data/assessments.json');
+// The library's source of truth is data/library.json; the site gets everything but excluded entries.
+const library: Entry[] = JSON.parse(fs.readFileSync(from('data/library.json'), 'utf8'));
+const errors = validate(library);
+if (errors.length) throw new Error('data/library.json is invalid:\n' + errors.join('\n'));
+fs.writeFileSync(from('site/data/library.json'), serialize(library.filter(e => e.status !== 'excluded')));
+
+console.log('Built site/score.js, site/data/controls.json, site/data/assessments.json, site/data/library.json');

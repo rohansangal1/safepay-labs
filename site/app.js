@@ -280,19 +280,31 @@ function renderRoadmap() {
 
 // ---------- Library & docs ----------
 
+const UNREVIEWED = 'Unreviewed';
+const FLAG_LABELS = { 'new-version': 'New version', 'link-broken': 'Link broken' };
+
+// Included sources by category, plus automated finds awaiting review (see scripts/update-library.ts).
 function renderLibrary(category = 'All') {
-  const categories = ['All', ...new Set(library.map(x => x.category))];
+  const included = library.filter(x => x.status === 'included');
+  const candidates = library.filter(x => x.status === 'candidate');
+  const categories = ['All', ...new Set(included.map(x => x.category)), ...(candidates.length ? [UNREVIEWED] : [])];
   $('library-filters').innerHTML = categories.map(c =>
-    `<button type="button" class="chip${c === category ? ' on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+    `<button type="button" class="chip${c === category ? ' on' : ''}" data-cat="${esc(c)}">${esc(c)}${c === UNREVIEWED ? ` (${candidates.length})` : ''}</button>`).join('');
   $('library-filters').querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => renderLibrary(b.dataset.cat)));
-  $('library-list').innerHTML = library
-    .filter(x => category === 'All' || x.category === category)
+  const shown = category === UNREVIEWED ? candidates : included.filter(x => category === 'All' || x.category === category);
+  $('library-list').innerHTML = shown
     .map(x => `
       <a class="item" href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">
-        <div class="item-meta"><span class="tag">${esc(x.category)}</span><span class="muted">${esc(x.source)}</span></div>
+        <div class="item-meta">
+          <span class="tag">${esc(x.status === 'candidate' ? UNREVIEWED : x.category)}</span>
+          ${(x.flags || []).map(f => `<span class="tag flag">${esc(FLAG_LABELS[f] || f)}</span>`).join('')}
+          <span class="muted">${esc(x.source)}</span>
+        </div>
         <b>${esc(x.title)} ↗</b>
-        <p>${esc(x.note)}</p>
-      </a>`).join('');
+        ${x.authors ? `<p class="muted">${esc(x.authors)}</p>` : ''}
+        <p>${esc(x.note || x.abstract || '')}</p>
+        ${x.found ? `<p class="muted">Found ${esc(x.found.date)} via ${esc(x.found.via)}</p>` : ''}
+      </a>`).join('') || '<p class="muted empty">Nothing here yet.</p>';
 }
 
 function renderDocs() {

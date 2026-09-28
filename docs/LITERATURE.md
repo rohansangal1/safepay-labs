@@ -1,4 +1,6 @@
 # Related work and primary sources
+The full, current list of sources is [`data/library.json`](../data/library.json), updated daily by a review-gated job (see the README). This page holds the analysis: the closest work, the novelty matrix and review notes.
+
 Search date: 27 September 2026. Scoped discovery review; bibliographic/abstract screening unless otherwise stated. Full-text quality appraisal, code reproducibility and citation chaining remain work before preregistration. Search themes: cashier-as-a-service logic flaws, multi-party application testing, payment integration benchmarks, provider webhook/fulfillment guidance and PCI payment-page scope.
 
 ## Closest research

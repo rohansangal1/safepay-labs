@@ -1,0 +1,51 @@
+name: Library update
+# Daily search for new related work. Changes arrive as one rolling pull request from the
+# library-updates branch, rebuilt from main each run, so it always holds everything new.
+on:
+  schedule:
+    - cron: '23 6 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: library-update
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: node scripts/update-library.ts --summary "$RUNNER_TEMP/library-summary.md"
+        env:
+          # Optional. Semantic Scholar rate-limits anonymous requests heavily.
+          S2_API_KEY: ${{ secrets.S2_API_KEY }}
+      - run: npm run build:site
+      - run: npm test
+      - name: Open or update the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- data/library.json; then
+            echo "No library changes."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C library-updates
+          git add data/library.json site/data/library.json
+          git commit -m "Library update $(date -u +%F)"
+          git push --force origin library-updates
+          if [ "$(gh pr view library-updates --json state --jq .state 2>/dev/null)" = OPEN ]; then
+            gh pr edit library-updates --body-file "$RUNNER_TEMP/library-summary.md"
+          else
+            gh pr create --base main --head library-updates --title 'Library update' --body-file "$RUNNER_TEMP/library-summary.md"
+          fi
