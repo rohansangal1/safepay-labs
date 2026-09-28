@@ -18,3 +18,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+
+# Generated analysis reports (regenerate on demand)
+analysis/reports/
