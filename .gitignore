@@ -10,3 +10,11 @@ artifacts/
 *.tar.gz
 node_modules/
 .vercel
+.env*
+
+# Python analysis
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
