@@ -43,8 +43,8 @@ async function startLab(defects: string[]) {
       const { body, signature } = signedDelivery(event, key, timestamp);
       return deliverRaw(body, signature);
     },
-    fulfillments: (orderId?: string) => checkout.state.fulfillments.filter(f => orderId === undefined || f.order === orderId).length,
-    close: () => new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => resolve()); }),
+    fulfillments: checkout.fulfillments,
+    close: () => new Promise<void>(resolve => { server.closeAllConnections(); server.close(() => { checkout.close(); resolve(); }); }),
   };
 }
 

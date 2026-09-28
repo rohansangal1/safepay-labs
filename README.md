@@ -43,6 +43,8 @@ The code is TypeScript that Node runs directly through type stripping. `.npmrc` 
 ## Reference checkout
 `lab/subjects/reference/` is a small local checkout with a catalog, orders, payments and fulfillment records. It binds to 127.0.0.1 only and makes no outbound calls. There's no real provider, money or card data. It calibrates the checks: a known-good subject plus variants with one safeguard removed.
 
+State lives in `node:sqlite`. A verified success event records the payment and a fulfillment job in one transaction; the job then runs from that outbox. If fulfillment fails or the process stops, the job stays pending and runs on the next event or restart. Unique indexes allow one fulfillment per order, however many events arrive.
+
 `npm run assess` runs 19 invariant checks mapped to six PIAS controls (amount, binding, authenticity, fulfillment, authorization, idempotency). The oracle is the checkout's fulfillment records, not its HTTP responses. The baseline passes all six. It's rated *insufficient evidence* because the other six controls have no checks yet. Each of the seven seeded defects (`DEFECTS` in `app.ts`) is caught by its own control and no other, and the tests enforce this.
 
 To explore by hand:
@@ -53,7 +55,7 @@ curl -X POST localhost:4280/orders -H 'x-lab-customer: alice' \
 LAB_WEBHOOK_SECRET=devsecret npm run checkout:event -- ord_0001 alice
 curl localhost:4280/orders/ord_0001 -H 'x-lab-customer: alice'   # status: fulfilled
 ```
-Add `LAB_DEFECTS=skipSignature` (comma-separated) to start it with a seeded defect.
+Add `LAB_DEFECTS=skipSignature` (comma-separated) to start it with a seeded defect. Add `LAB_DB=work/checkout.db` to keep state across restarts (`work/` is git-ignored).
 
 ## Contributing, security and license
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Nothing here authorizes testing systems you don't own. Licensed under [Apache-2.0](LICENSE). To cite, see [CITATION.cff](CITATION.cff).

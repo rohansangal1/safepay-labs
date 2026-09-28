@@ -2,7 +2,7 @@
   { "id": 1, "title": "Restructure and TypeScript", "detail": "packages/ and lab/ layout, npm workspaces, Node type stripping, type check.", "phase": "0 Foundation", "status": "done" },
   { "id": 2, "title": "CI, license and decisions", "detail": "SHA-pinned CI and CodeQL, generated-files check, Apache-2.0, ADRs 001–006.", "phase": "0 Foundation", "status": "done" },
   { "id": 3, "title": "Novelty matrix", "detail": "Position against Alipay-PIBench, the Stripe agent benchmark and BaxBench.", "phase": "0 Foundation", "status": "done" },
-  { "id": 4, "title": "Reference checkout", "detail": "Local checkout, fake provider, 19 checks, 7 seeded defects. Next: node:sqlite with outbox.", "phase": "1 Measurement core", "status": "in-progress" },
+  { "id": 4, "title": "Reference checkout", "detail": "Local checkout on node:sqlite with a transactional fulfillment outbox, fake provider, 19 checks, 7 seeded defects; retry and restart recovery tested.", "phase": "1 Measurement core", "status": "done" },
   { "id": 5, "title": "SubjectAdapter and check registry", "detail": "Checks work against any subject; each check versioned with control, layer and oracle.", "phase": "1 Measurement core", "status": "not-started" },
   { "id": 6, "title": "Evidence records", "detail": "Evidence schema v1 with commit, versions, timestamps and redaction policy.", "phase": "1 Measurement core", "status": "not-started" },
   { "id": 7, "title": "Checks for remaining controls", "detail": "Lifecycle, recovery, secrets, data minimization, browser integrity, audit.", "phase": "1 Measurement core", "status": "not-started" },
