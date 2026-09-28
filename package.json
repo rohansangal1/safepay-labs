@@ -23,7 +23,7 @@
     "check:generated": "npm run assess && npm run build:site && git diff --exit-code -- data/runs site/score.js site/data"
   },
   "devDependencies": {
-    "@types/node": "22.20.4",
+    "@types/node": "26.6.2",
     "typescript": "7.0.2"
   }
 }
