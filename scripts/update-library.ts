@@ -1,7 +1,8 @@
 // Refreshes data/library.json: new arXiv papers on the project's topics, new papers citing
 // tracked work, new versions of tracked preprints and dead links. Runs daily in
 // .github/workflows/library.yml, which opens a pull request for a person to review.
-// Usage: node scripts/update-library.ts [--dry-run] [--summary <file>]
+// Usage: node scripts/update-library.ts [--dry-run] [--summary <file>] [--backfill-only]
+//   --backfill-only: skip searches/citations/link checks and only fill missing arXiv abstracts.
 import fs from 'node:fs';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -19,6 +20,7 @@ const S2_MAX_CITATIONS = 1000;
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const backfillOnly = args.includes('--backfill-only');
 const summaryPath = args.includes('--summary') ? args[args.indexOf('--summary') + 1] : null;
 const today = new Date().toISOString().slice(0, 10);
 
@@ -26,7 +28,13 @@ const library: Entry[] = JSON.parse(fs.readFileSync(LIBRARY, 'utf8'));
 const config: { arxiv: { name: string; query: string; must: string[][] }[]; per_query: number; citation_terms: string[] } =
   JSON.parse(fs.readFileSync(QUERIES, 'utf8'));
 const problems: string[] = [];
-const report = { added: [] as Entry[], versions: [] as Entry[], broken: [] as Entry[], restored: [] as Entry[] };
+const report = {
+  added: [] as Entry[],
+  versions: [] as Entry[],
+  broken: [] as Entry[],
+  restored: [] as Entry[],
+  abstracts: [] as Entry[],
+};
 
 async function get(url: string, headers: Record<string, string> = {}, retries = 3): Promise<Response> {
   for (let attempt = 0; ; attempt++) {
@@ -71,6 +79,28 @@ async function trackVersions() {
     }
   } catch (err) {
     problems.push(`arXiv versions: ${(err as Error).message}`);
+  }
+}
+
+// Fills the `abstract` field for arXiv-backed entries that lack one, so the site and the Python
+// analysis have real source text, not just the curated note. arXiv abstracts only.
+async function backfillAbstracts() {
+  const missing = library.filter(e => e.status !== 'excluded' && arxivId(e.url) && !e.abstract);
+  if (!missing.length) return;
+  try {
+    const byId = new Map(
+      (await arxiv({ id_list: missing.map(e => arxivId(e.url)).join(','), max_results: String(missing.length) }))
+        .map(f => [f.id, f.abstract]),
+    );
+    for (const e of missing) {
+      const abstract = byId.get('arxiv:' + arxivId(e.url));
+      if (abstract) {
+        e.abstract = abstract;
+        report.abstracts.push(e);
+      }
+    }
+  } catch (err) {
+    problems.push(`abstract backfill: ${(err as Error).message}`);
   }
 }
 
@@ -139,6 +169,11 @@ function summary(): string {
     for (const e of report.restored) lines.push(`- Working again: ${link(e)}`);
     lines.push('');
   }
+  if (report.abstracts.length) {
+    lines.push(`### Filled ${report.abstracts.length} missing abstract${report.abstracts.length === 1 ? '' : 's'}`, '');
+    for (const e of report.abstracts) lines.push(`- ${link(e)}`);
+    lines.push('');
+  }
   if (problems.length) {
     lines.push('### Sources that failed this run', '', ...problems.map(p => `- ${p}`), '');
   }
@@ -149,10 +184,15 @@ function summary(): string {
   return lines.join('\n') + '\n';
 }
 
-await searchArxiv();
-await trackVersions();
-await citingPapers();
-await checkLinks();
+if (backfillOnly) {
+  await backfillAbstracts();
+} else {
+  await searchArxiv();
+  await trackVersions();
+  await backfillAbstracts();
+  await citingPapers();
+  await checkLinks();
+}
 
 const errors = validate(library);
 if (errors.length) {
