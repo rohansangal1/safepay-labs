@@ -18,6 +18,7 @@
     "assess": "node lab/subjects/reference/assess.ts",
     "build:site": "node scripts/build-site.ts",
     "library:update": "node scripts/update-library.ts",
+    "library:abstracts": "node scripts/update-library.ts --backfill-only",
     "site": "npm run build:site && python3 -m http.server 4173 --bind 127.0.0.1 --directory site",
     "checkout": "node lab/subjects/reference/server.ts",
     "checkout:event": "node lab/subjects/reference/send-event.ts",
