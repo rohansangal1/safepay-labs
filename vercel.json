@@ -3,6 +3,29 @@
   "framework": null,
   "installCommand": "npm ci",
   "buildCommand": "npm run build:site",
-  "outputDirectory": "site",
-  "cleanUrls": true
+  "outputDirectory": "public",
+  "cleanUrls": true,
+  "functions": {
+    "api/portal.py": {
+      "includeFiles": "{site,portal}/**",
+      "excludeFiles": "{analysis,data,docs,lab,node_modules,packages,public,scripts,portal/tests}/**"
+    }
+  },
+  "redirects": [
+    { "source": "/portal", "destination": "/portal/", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/portal/(.*)", "destination": "/api/portal?path=$1" }
+  ],
+  "headers": [
+    {
+      "source": "/((?!portal|api/).*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains" }
+      ]
+    }
+  ]
 }

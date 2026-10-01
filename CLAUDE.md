@@ -40,11 +40,14 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
 - **`packages/` has zero runtime dependencies** (auditable engine/checks/CLI). `lab/` may add
   pinned deps. See [ADR 003](docs/decisions/003-dependencies-and-layout.md).
 - **Generated files are committed and must be current:** `data/runs/*.json`, `site/score.js`,
-  `site/data/*`. Regenerate with `npm run assess && npm run build:site`; `npm run check:generated`
+  `site/data/*`, `public/data/*`. Regenerate with `npm run assess && npm run build:site`; `npm run check:generated`
   enforces it.
 - **Metric changes are versioned** and need an ADR + a metric-version bump ([CONTRIBUTING.md](CONTRIBUTING.md)).
 - **Every new check needs a failing case** on a subject lacking the control, and must pass on the reference.
 - **Never commit** real card data, live keys, raw HAR files or unredacted traces.
+- **Nothing from the portal goes in `public/`.** Research data and results stay under `site/`; the
+  landing page gets phase-level roadmap counts only. Researcher passwords and `DATABASE_URL` never
+  enter the repo.
 
 ## Layout
 - `packages/core` — PIAS engine (TypeScript, zero deps), control catalog, tests.
@@ -52,7 +55,12 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
 - `scripts/` — `build-site.ts`, the daily library updater (`update-library.ts`, `library.ts`).
 - `analysis/` — Python (uv, 3.12): reads `data/runs/` and `data/library.json`; PIAS run loaders,
   cluster bootstrap, and library exploratory analysis. Reads only; never writes into `data/`.
-- `site/` — static research site (built from `packages/core` + `data/`).
+- `public/` — public landing page (static; idea, mission, roadmap). No results. Images are vendored
+  with sources in `public/assets/SOURCES.md`.
+- `site/` — researcher portal (built from `packages/core` + `data/`). **Not public**: served only
+  through `api/portal.py` after an HTTP Basic check ([ADR 008](docs/decisions/008-public-landing-and-researcher-portal.md)).
+- `portal/` + `api/portal.py` — Python access layer (FastAPI, argon2-cffi, psycopg; root
+  `pyproject.toml`/`uv.lock`): the gate, the researcher store (Neon Postgres) and the account CLI.
 - `data/` — `runs/` (assessment outputs), `library.json` (knowledge base), `library-queries.json`.
 - `docs/` — research plan, metric, safety, literature, dataset/tools, and `decisions/` (ADRs).
 
@@ -64,7 +72,9 @@ npm test                 # engine, lab and script tests
 npm run typecheck
 npm run assess           # reference checkout → data/runs/lab-reference.json
 npm run build:site       # regenerate site/ from source + data
-npm run site             # build + serve at http://127.0.0.1:4173
+npm run site             # build + serve landing (/) and portal (/portal/) at http://127.0.0.1:4173
+npm run researcher -- list   # manage portal accounts (add/passwd/disable/remove); docs/PORTAL_ACCESS.md
+npm run test:portal      # ruff + pytest for portal/ and api/
 npm run library:update   # daily related-work search (also in CI)
 npm run library:abstracts # backfill arXiv abstracts into data/library.json
 
@@ -80,6 +90,9 @@ uv run python -m piaslab.library_report   # → analysis/reports/library/ (git-i
 - **Phase 0 done and on `main`:** TS restructure, CI + CodeQL, reference checkout (sqlite + outbox),
   static site, daily library job.
 - **On `main`:** Python analysis env (loaders, cluster bootstrap), library exploratory analysis.
+- **On branch `feat/public-landing-researcher-portal`:** public landing page + researcher-only portal
+  (ADR 008). Before it works in production: accept Neon's marketplace terms and provision the
+  database, run `npm run researcher -- init`, and open production in Deployment Protection.
 - **In flight:** arXiv abstract backfill (`feat/library-abstracts`); Phase 1 SubjectAdapter
   (`phase-1-subject-adapter`); a Dependabot pytest bump (widen the `pytest<9` pin in
   `analysis/pyproject.toml` to accept it).
@@ -87,6 +100,9 @@ uv run python -m piaslab.library_report   # → analysis/reports/library/ (git-i
   check registry, evidence schema, architecture variants and harm oracle (Phase 1).
 
 ## Deployment
-Static site on **Vercel** (project `payment-integration-lab`, Node 24, SSO-protected on all
-deployments so it stays private until public release per [ADR 006](docs/decisions/006-public-site-and-publishing.md)).
+On **Vercel** (project `payment-integration-lab`, Node 24): `public/` is the static output, and
+`/portal/*` is rewritten to the Python function `api/portal.py`, which reads researcher accounts
+from Neon Postgres (`DATABASE_URL`). Production must be reachable without Vercel login so the
+landing page is public; previews stay SSO-protected. Results stay private until public release per
+[ADR 006](docs/decisions/006-public-site-and-publishing.md).
 Connect the GitHub repo in the Vercel dashboard to get per-PR previews.

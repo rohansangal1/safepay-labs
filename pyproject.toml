@@ -1,0 +1,36 @@
+[project]
+name = "pil-portal"
+version = "0.1.0"
+description = "Researcher portal access layer for the Payment Integration Lab (portal/, api/)."
+requires-python = "==3.12.*"
+dependencies = [
+    "argon2-cffi>=23.1,<26",
+    "fastapi>=0.117,<1",
+    "psycopg[binary]>=3.2,<4",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2,<3",
+    "pytest>=8.3,<10",
+    "ruff>=0.7,<1",
+    "uvicorn>=0.30,<1",
+]
+
+# Modules run from source, not a package to build/distribute (same convention as analysis/).
+# This file sits at the repository root because that is where Vercel's Python runtime reads
+# the dependencies for api/portal.py. analysis/ keeps its own, separate environment.
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["analysis"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["portal/tests"]
+pythonpath = ["."]

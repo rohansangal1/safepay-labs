@@ -19,10 +19,12 @@
     "build:site": "node scripts/build-site.ts",
     "library:update": "node scripts/update-library.ts",
     "library:abstracts": "node scripts/update-library.ts --backfill-only",
-    "site": "npm run build:site && python3 -m http.server 4173 --bind 127.0.0.1 --directory site",
+    "site": "npm run build:site && uv run python -m portal.dev",
+    "researcher": "uv run --env-file .env.local python -m portal.cli",
+    "test:portal": "uv run ruff check portal api && uv run pytest -q",
     "checkout": "node lab/subjects/reference/server.ts",
     "checkout:event": "node lab/subjects/reference/send-event.ts",
-    "check:generated": "npm run assess && npm run build:site && git diff --exit-code -- data/runs site/score.js site/data"
+    "check:generated": "npm run assess && npm run build:site && git diff --exit-code -- data/runs site/score.js site/data public/data"
   },
   "devDependencies": {
     "@types/node": "26.6.2",

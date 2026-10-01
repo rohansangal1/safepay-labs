@@ -1,6 +1,6 @@
 # 003. Zero-dependency core, pinned dependencies in the lab
 
-- **Status:** Accepted, 2026-09-27
+- **Status:** Accepted, 2026-09-27. Amended by [008](008-public-landing-and-researcher-portal.md): adds `portal/` (Python, pinned dependencies) and `public/`.
 
 ## Context
 The project should become a tool people trust enough to point at their own checkout. The research lab, however, needs browsers, containers and provider SDKs.

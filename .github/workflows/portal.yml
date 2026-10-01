@@ -1,0 +1,32 @@
+name: Portal checks
+# Researcher portal access layer (portal/, api/). Reproducible from the committed root uv.lock,
+# independent of the Node CI. Uses an in-memory store, so no database or secrets are needed.
+on:
+  push:
+    paths:
+      - 'portal/**'
+      - 'api/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/portal.yml'
+  pull_request:
+    paths:
+      - 'portal/**'
+      - 'api/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - '.github/workflows/portal.yml'
+permissions:
+  contents: read
+jobs:
+  portal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Install uv via its official script (no third-party action to pin); the lockfile, not the
+      # uv version, fixes dependency versions.
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv python install 3.12
+      - run: uv sync --locked
+      - run: uv run ruff check portal api
+      - run: uv run pytest -q
