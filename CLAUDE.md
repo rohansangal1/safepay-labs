@@ -58,9 +58,10 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
 - `public/` — public landing page (static; idea, mission, roadmap). No results. Images are vendored
   with sources in `public/assets/SOURCES.md`.
 - `site/` — researcher portal (built from `packages/core` + `data/`). **Not public**: served only
-  through `api/portal.py` after an HTTP Basic check ([ADR 008](docs/decisions/008-public-landing-and-researcher-portal.md)).
+  through `api/portal.py` at `/devs/`, after sign-in (form + 90-day session cookie) ([ADR 008](docs/decisions/008-public-landing-and-researcher-portal.md)).
 - `portal/` + `api/portal.py` — Python access layer (FastAPI, argon2-cffi, psycopg; root
-  `pyproject.toml`/`uv.lock`): the gate, the researcher store (Neon Postgres) and the account CLI.
+  `pyproject.toml`/`uv.lock`): the gate, the admin page (`/devs/admin`), the researcher and session store (Neon Postgres) and the
+  account CLI. Account changes go through `portal/accounts.py` so page and CLI stay identical.
 - `data/` — `runs/` (assessment outputs), `library.json` (knowledge base), `library-queries.json`.
 - `docs/` — research plan, metric, safety, literature, dataset/tools, and `decisions/` (ADRs).
 
@@ -72,8 +73,8 @@ npm test                 # engine, lab and script tests
 npm run typecheck
 npm run assess           # reference checkout → data/runs/lab-reference.json
 npm run build:site       # regenerate site/ from source + data
-npm run site             # build + serve landing (/) and portal (/portal/) at http://127.0.0.1:4173
-npm run researcher -- list   # manage portal accounts (add/passwd/disable/remove); docs/PORTAL_ACCESS.md
+npm run site             # build + serve landing (/) and portal (/devs/) at http://127.0.0.1:4173
+npm run researcher -- list   # terminal fallback for portal accounts; admins normally use /devs/admin (docs/PORTAL_ACCESS.md)
 npm run test:portal      # ruff + pytest for portal/ and api/
 npm run library:update   # daily related-work search (also in CI)
 npm run library:abstracts # backfill arXiv abstracts into data/library.json
@@ -101,7 +102,7 @@ uv run python -m piaslab.library_report   # → analysis/reports/library/ (git-i
 
 ## Deployment
 On **Vercel** (project `payment-integration-lab`, Node 24): `public/` is the static output, and
-`/portal/*` is rewritten to the Python function `api/portal.py`, which reads researcher accounts
+`/devs/*` is rewritten to the Python function `api/portal.py`, which reads researcher accounts
 from Neon Postgres (`DATABASE_URL`). Production must be reachable without Vercel login so the
 landing page is public; previews stay SSO-protected. Results stay private until public release per
 [ADR 006](docs/decisions/006-public-site-and-publishing.md).

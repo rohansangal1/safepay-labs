@@ -12,14 +12,14 @@
     }
   },
   "redirects": [
-    { "source": "/portal", "destination": "/portal/", "permanent": true }
+    { "source": "/devs", "destination": "/devs/", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/portal/(.*)", "destination": "/api/portal?path=$1" }
+    { "source": "/devs/(.*)", "destination": "/api/portal?path=$1" }
   ],
   "headers": [
     {
-      "source": "/((?!portal|api/).*)",
+      "source": "/((?!devs|api/).*)",
       "headers": [
         { "key": "Content-Security-Policy", "value": "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },

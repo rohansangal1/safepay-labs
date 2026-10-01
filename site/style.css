@@ -98,6 +98,12 @@ nav a {
 }
 nav a:hover { background: var(--surface-2); color: var(--text); }
 nav a.active { background: var(--accent-soft); color: var(--accent); font-weight: 550; }
+.signout { margin-left: auto; }
+.signout button {
+  font: inherit; font-size: 14px; color: var(--text-2); background: none;
+  border: 1px solid var(--border); border-radius: 7px; padding: 5px 10px; cursor: pointer;
+}
+.signout button:hover { background: var(--surface-2); color: var(--text); }
 
 /* ---------- Layout ---------- */
 

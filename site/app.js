@@ -17,7 +17,7 @@ const DOCS = [
   ['docs/DATA_AND_TOOLS.md', 'Dataset and tooling', 'Dataset units, evidence records and execution architecture.'],
   ['docs/decisions/README.md', 'Decision records', 'Why the project is shaped the way it is (ADRs).'],
   ['docs/GITHUB_SETUP.md', 'Repository setup', 'CI, repository settings to enable and backlog.'],
-  ['docs/PORTAL_ACCESS.md', 'Portal access', 'Getting an account, signing in, and managing researcher accounts from the terminal.'],
+  ['docs/PORTAL_ACCESS.md', 'Portal access', 'Getting an account, signing in, the admin page, and what to do when someone leaves.'],
 ];
 
 const $ = id => document.getElementById(id);
@@ -429,6 +429,9 @@ async function init() {
 
   window.addEventListener('hashchange', route);
   route();
+
+  // Admins get a link to the account page. The server checks again there; this only hides the link.
+  fetch('me').then(r => (r.ok ? r.json() : null)).then(me => { if (me?.admin) $('admin-link').hidden = false; }).catch(() => {});
 }
 
 init();

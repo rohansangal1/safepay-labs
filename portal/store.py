@@ -1,4 +1,4 @@
-"""Where researcher accounts and failed-attempt counters live.
+"""Where researcher accounts, sessions, failed-attempt counters and the admin log live.
 
 `PostgresStore` is the real one (Neon, via DATABASE_URL). `MemoryStore` backs the tests and the
 local dev server, so neither needs a database.
@@ -25,6 +25,22 @@ class Researcher:
     disabled: bool
     created_at: datetime
     last_seen_at: datetime | None
+    is_admin: bool = False
+
+
+@dataclass(frozen=True)
+class Session:
+    email: str
+    is_admin: bool
+    confirmed_at: datetime | None  # when this browser last proved the password (admin step-up)
+
+
+@dataclass(frozen=True)
+class AuditEntry:
+    at: datetime
+    actor: str
+    action: str
+    target: str
 
 
 def normalize_email(email: str) -> str:
@@ -42,12 +58,25 @@ class ResearcherStore(Protocol):
     def failures(self, key: str) -> int: ...
     def record_failure(self, key: str) -> None: ...
     def clear_failures(self, key: str) -> None: ...
+    def set_admin(self, email: str, is_admin: bool) -> bool: ...
+    def create_session(
+        self, token_hash: str, email: str, expires_at: datetime, confirmed_at: datetime
+    ) -> None: ...
+    def session(self, token_hash: str, now: datetime) -> Session | None: ...
+    def confirm_session(self, token_hash: str, at: datetime) -> None: ...
+    def extend_session(self, token_hash: str, expires_at: datetime) -> None: ...
+    def delete_session(self, token_hash: str) -> None: ...
+    def delete_sessions_for(self, email: str) -> int: ...
+    def record_audit(self, at: datetime, actor: str, action: str, target: str) -> None: ...
+    def recent_audit(self, limit: int) -> list[AuditEntry]: ...
 
 
 class MemoryStore:
     def __init__(self, clock: Callable[[], float] = time.monotonic) -> None:
         self._researchers: dict[str, Researcher] = {}
         self._failures: dict[str, tuple[int, float]] = {}
+        self._sessions: dict[str, tuple[str, datetime, datetime | None]] = {}
+        self._audit: list[AuditEntry] = []
         self._clock = clock
 
     def get(self, email: str) -> Researcher | None:
@@ -78,6 +107,7 @@ class MemoryStore:
         return self._replace(email, disabled=disabled)
 
     def remove(self, email: str) -> bool:
+        self.delete_sessions_for(email)
         return self._researchers.pop(email, None) is not None
 
     def touch(self, email: str) -> None:
@@ -95,11 +125,51 @@ class MemoryStore:
     def clear_failures(self, key: str) -> None:
         self._failures.pop(key, None)
 
+    def set_admin(self, email: str, is_admin: bool) -> bool:
+        return self._replace(email, is_admin=is_admin)
+
+    def create_session(
+        self, token_hash: str, email: str, expires_at: datetime, confirmed_at: datetime
+    ) -> None:
+        self._sessions[token_hash] = (email, expires_at, confirmed_at)
+
+    def session(self, token_hash: str, now: datetime) -> Session | None:
+        email, expires_at, confirmed_at = self._sessions.get(token_hash, ("", now, None))
+        researcher = self._researchers.get(email)
+        if expires_at <= now or researcher is None or researcher.disabled:
+            return None
+        return Session(email, researcher.is_admin, confirmed_at)
+
+    def confirm_session(self, token_hash: str, at: datetime) -> None:
+        if token_hash in self._sessions:
+            email, expires_at, _ = self._sessions[token_hash]
+            self._sessions[token_hash] = (email, expires_at, at)
+
+    def extend_session(self, token_hash: str, expires_at: datetime) -> None:
+        if token_hash in self._sessions:
+            email, _, confirmed_at = self._sessions[token_hash]
+            self._sessions[token_hash] = (email, expires_at, confirmed_at)
+
+    def delete_session(self, token_hash: str) -> None:
+        self._sessions.pop(token_hash, None)
+
+    def delete_sessions_for(self, email: str) -> int:
+        mine = [h for h, (owner, _, _) in self._sessions.items() if owner == email]
+        for token_hash in mine:
+            del self._sessions[token_hash]
+        return len(mine)
+
+    def record_audit(self, at: datetime, actor: str, action: str, target: str) -> None:
+        self._audit.append(AuditEntry(at, actor, action, target))
+
+    def recent_audit(self, limit: int) -> list[AuditEntry]:
+        return self._audit[::-1][:limit]
+
 
 class PostgresStore:
     """One connection per warm function instance, opened on first use."""
 
-    _COLUMNS = "email, name, password_hash, disabled, created_at, last_seen_at"
+    _COLUMNS = "email, name, password_hash, disabled, created_at, last_seen_at, is_admin"
     _WINDOW = f"interval '{FAILURE_WINDOW_SECONDS} seconds'"
 
     def __init__(self, url: str | None = None) -> None:
@@ -183,3 +253,57 @@ class PostgresStore:
 
     def clear_failures(self, key: str) -> None:
         self._execute("DELETE FROM auth_failures WHERE key = %s", (key,))
+
+    def set_admin(self, email: str, is_admin: bool) -> bool:
+        cur = self._execute(
+            "UPDATE researchers SET is_admin = %s WHERE email = %s", (is_admin, email)
+        )
+        return cur.rowcount == 1
+
+    def create_session(
+        self, token_hash: str, email: str, expires_at: datetime, confirmed_at: datetime
+    ) -> None:
+        # Expired rows are swept here, so the table stays small without a scheduled job.
+        self._execute("DELETE FROM sessions WHERE expires_at <= now()")
+        self._execute(
+            "INSERT INTO sessions (token_hash, email, expires_at, admin_confirmed_at) "
+            "VALUES (%s, %s, %s, %s)",
+            (token_hash, email, expires_at, confirmed_at),
+        )
+
+    def session(self, token_hash: str, now: datetime) -> Session | None:
+        row = self._execute(
+            "SELECT s.email, r.is_admin, s.admin_confirmed_at "
+            "FROM sessions s JOIN researchers r ON r.email = s.email "
+            "WHERE s.token_hash = %s AND s.expires_at > %s AND NOT r.disabled",
+            (token_hash, now),
+        ).fetchone()
+        return Session(*row) if row else None
+
+    def confirm_session(self, token_hash: str, at: datetime) -> None:
+        self._execute(
+            "UPDATE sessions SET admin_confirmed_at = %s WHERE token_hash = %s", (at, token_hash)
+        )
+
+    def extend_session(self, token_hash: str, expires_at: datetime) -> None:
+        self._execute(
+            "UPDATE sessions SET expires_at = %s WHERE token_hash = %s", (expires_at, token_hash)
+        )
+
+    def delete_session(self, token_hash: str) -> None:
+        self._execute("DELETE FROM sessions WHERE token_hash = %s", (token_hash,))
+
+    def delete_sessions_for(self, email: str) -> int:
+        return self._execute("DELETE FROM sessions WHERE email = %s", (email,)).rowcount
+
+    def record_audit(self, at: datetime, actor: str, action: str, target: str) -> None:
+        self._execute(
+            "INSERT INTO admin_audit (at, actor, action, target) VALUES (%s, %s, %s, %s)",
+            (at, actor, action, target),
+        )
+
+    def recent_audit(self, limit: int) -> list[AuditEntry]:
+        rows = self._execute(
+            "SELECT at, actor, action, target FROM admin_audit ORDER BY at DESC LIMIT %s", (limit,)
+        ).fetchall()
+        return [AuditEntry(*row) for row in rows]

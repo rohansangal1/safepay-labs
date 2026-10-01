@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Sign in · Payment Integration Lab</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f5f8b'/%3E%3Cpath d='M10 23V9h7a5 5 0 010 10h-4' fill='none' stroke='%23fff' stroke-width='3'/%3E%3C/svg%3E">
+  <style>
+    /* Self-contained on purpose: nothing else from the portal is readable before sign-in.
+       Colours mirror site/style.css. */
+    :root {
+      color-scheme: light;
+      --bg: #f6f6f4; --surface: #fcfcfb; --surface-2: #f0f0ed; --border: #e3e2de;
+      --text: #0b0b0b; --text-2: #52514e; --muted: #7a7973; --accent: #2a78d6;
+      --critical-ink: #a32020; --critical-soft: #fbeaea;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #121211; --surface: #1a1a19; --surface-2: #232321; --border: #2e2e2b;
+        --text: #ffffff; --text-2: #c3c2b7; --muted: #8f8e86; --accent: #3987e5;
+        --critical-ink: #f07a7a; --critical-soft: #2e1a1a;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
+      background: var(--bg); color: var(--text);
+      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    main { width: min(100%, 380px); display: grid; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; }
+    .logo {
+      display: grid; place-items: center; width: 26px; height: 26px; border-radius: 7px;
+      background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
+    }
+    form {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 24px; display: grid; gap: 16px;
+    }
+    h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+    p { margin: 0; color: var(--text-2); }
+    label { display: grid; gap: 6px; font-size: 14px; font-weight: 550; }
+    input {
+      font: inherit; color: var(--text); background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; width: 100%;
+    }
+    input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    button {
+      font: inherit; font-weight: 600; color: #fff; background: var(--accent);
+      border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer;
+    }
+    button:hover { filter: brightness(1.08); }
+    .error {
+      color: var(--critical-ink); background: var(--critical-soft);
+      border-radius: 8px; padding: 8px 12px; font-size: 14px;
+    }
+    .hint { font-size: 13px; color: var(--muted); }
+    .local { font-size: 14px; background: var(--surface-2); border-radius: 8px; padding: 8px 12px; }
+    .local code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand"><span class="logo">P</span>Payment Integration Lab</div>
+    <form method="post" action="/devs/login">
+      <div>
+        <h1>Dev sign in</h1>
+        <p>For project researchers. You stay signed in on this browser.</p>
+      </div>
+      <!--message-->
+      <label>Email
+        <input type="email" name="email" autocomplete="username" required autofocus>
+      </label>
+      <label>Password
+        <input type="password" name="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit">Sign in</button>
+    </form>
+    <p class="hint">No account? Ask a project researcher to create one. <a href="/">Back to the public site</a></p>
+  </main>
+</body>
+</html>

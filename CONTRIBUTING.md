@@ -26,9 +26,9 @@ uv run pytest
 Python only reads `data/runs/`; it never writes there. Commit `analysis/uv.lock` with any dependency change. Notebooks are exploration only — never commit them with output cells.
 
 ## Researcher portal access
-The research views are private and live at `/portal/` on the project site. There is no sign-up page: accounts are created from the terminal, and your browser asks for the email and password itself. [docs/PORTAL_ACCESS.md](docs/PORTAL_ACCESS.md) has every step: getting an account, signing in, creating accounts for others, and what to do with the password when it is printed.
+The research views are private and live at `/devs/` on the project site. There is no sign-up page: an admin creates your account at `/devs/admin`, and you sign in once per browser at `/devs/`. [docs/PORTAL_ACCESS.md](docs/PORTAL_ACCESS.md) has every step: getting an account, signing in, managing devs on the admin page, and what to do when someone leaves.
 
-To look at the portal on your own machine without an account, run `npm run site` and use the throwaway login it prints.
+To look at the portal on your own machine without an account, run `npm run site` and use the local-only login it prints.
 
 The portal's access code is Python in `portal/` and `api/`, with its own checks:
 
