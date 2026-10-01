@@ -98,22 +98,30 @@
     <section id="sandbox" class="view" hidden>
       <div class="heading">
         <h1>Score sandbox</h1>
-        <p>Change control outcomes to see how the score responds. Changes are hypothetical and reset on reload.</p>
+        <p>Each control is one safeguard a payment integration should have. Set it to <b>Pass</b> (evidence shows it works), <b>Fail</b> (a test broke it) or <b>Unknown</b> (not tested) and see how the score responds. Select a control's name for what it means and how it is tested. Changes are hypothetical and reset on reload.</p>
       </div>
       <div class="sandbox">
         <article class="card">
-          <div class="card-head"><h2>Controls</h2><button id="reset" class="button">Reset</button></div>
+          <div class="card-head">
+            <h2>Controls</h2>
+            <div class="filters">
+              <label>Start from <select id="s-preset"></select></label>
+              <button id="reset" class="button">Reset</button>
+            </div>
+          </div>
           <div id="control-list"></div>
         </article>
         <article class="card score-card">
           <span class="label">Assurance range</span>
           <div id="s-range" class="score-big">—</div>
-          <div class="score-track"><div id="s-track-fill"></div></div>
-          <dl>
-            <div><dt>Coverage</dt><dd id="s-coverage">—</dd></div>
-            <div><dt>Observed pass rate</dt><dd id="s-observed">—</dd></div>
-          </dl>
+          <div class="score-track" aria-hidden="true"><span id="s-pass" class="pass"></span><span id="s-unknown" class="unknown"></span><span id="s-fail" class="fail"></span></div>
+          <div id="s-legend" class="score-legend"></div>
           <div id="s-gate" class="verdict">—</div>
+          <div id="s-explain" class="explain" aria-live="polite"></div>
+          <dl>
+            <div><dt>Coverage <small>share of weight tested</small></dt><dd id="s-coverage">—</dd></div>
+            <div><dt>Observed pass rate <small>of what was tested</small></dt><dd id="s-observed">—</dd></div>
+          </dl>
           <p class="formula">Lower = passed ÷ applicable weight<br>Upper = (passed + unknown) ÷ applicable<br>Coverage = assessed ÷ applicable</p>
         </article>
       </div>
