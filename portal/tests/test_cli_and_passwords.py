@@ -41,7 +41,7 @@ def test_weak_parameters_are_flagged_for_rehash() -> None:
 def test_generated_passwords_are_long_and_distinct() -> None:
     passwords = {generate_password() for _ in range(50)}
     assert len(passwords) == 50
-    assert all(len(p) == 24 and ":" not in p for p in passwords)
+    assert all(len(p) == 24 for p in passwords)
 
 
 def test_cli_add_prints_a_password_that_works(capsys) -> None:
@@ -60,7 +60,6 @@ def test_cli_add_refuses_duplicates_and_bad_emails(capsys) -> None:
     assert run(["add", "ada@example.org"], store) == 0
     assert run(["add", "ada@example.org"], store) == 1
     assert run(["add", "not-an-email"], store) == 2
-    assert run(["add", "a:b@example.org"], store) == 2
     assert len(store.all()) == 1
 
 
@@ -72,6 +71,20 @@ def test_cli_passwd_replaces_the_password(capsys) -> None:
     new = re.search(r"password: (\S+)", capsys.readouterr().out).group(1)
     stored = store.get("ada@example.org").password_hash
     assert verify_password(stored, new) and not verify_password(stored, old)
+
+
+def test_cli_passwd_disable_and_signout_end_sessions(capsys) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    now = datetime.now(UTC)
+    for command in ["passwd", "disable", "signout", "remove"]:
+        store = MemoryStore()
+        run(["add", "ada@example.org"], store)
+        store.create_session("hash", "ada@example.org", now + timedelta(days=1), now)
+        assert store.session("hash", now).email == "ada@example.org"
+        assert run([command, "ada@example.org"], store) == 0
+        store.set_disabled("ada@example.org", False)
+        assert store.session("hash", now) is None, command
 
 
 def test_cli_disable_enable_remove_and_list(capsys) -> None:
@@ -86,3 +99,21 @@ def test_cli_disable_enable_remove_and_list(capsys) -> None:
     assert run(["remove", "ada@example.org"], store) == 0
     assert run(["remove", "ada@example.org"], store) == 1
     assert store.all() == []
+
+
+def test_cli_grant_and_revoke_admin_and_audit_trail(capsys) -> None:
+    store = MemoryStore()
+    run(["add", "ada@example.org"], store)
+    assert run(["grant", "ada@example.org"], store) == 0
+    assert store.get("ada@example.org").is_admin
+    run(["list"], store)
+    assert "admin" in capsys.readouterr().out
+    assert run(["revoke", "ada@example.org"], store) == 0
+    assert not store.get("ada@example.org").is_admin
+    assert run(["grant", "nobody@example.org"], store) == 1
+    trail = [(e.actor, e.action, e.target) for e in store.recent_audit(10)]
+    assert trail == [
+        ("terminal", "revoke", "ada@example.org"),
+        ("terminal", "grant", "ada@example.org"),
+        ("terminal", "add", "ada@example.org"),
+    ]

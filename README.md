@@ -52,11 +52,11 @@ uv run pytest
 There are two halves ([ADR 008](docs/decisions/008-public-landing-and-researcher-portal.md)):
 
 - **`public/`** is the public landing page: the idea, the mission and a plain roadmap. No results.
-- **`site/`** is the researcher portal at `/portal/`. It is never served as a static file; a small Python function checks an email and password (the browser's own prompt, no sign-in page) before returning anything. Accounts are created from the terminal.
+- **`site/`** is the researcher portal at `/devs/`. It is never served as a static file; a small Python function shows a sign-in form and returns the portal only to a signed-in browser. You sign in once per browser and stay signed in. Admins create and remove accounts on a page at `/devs/admin`.
 
 **Researchers: [docs/PORTAL_ACCESS.md](docs/PORTAL_ACCESS.md) is the full guide** to getting an account, signing in, creating accounts for others and handling the password.
 
-`npm run site` copies the engine and the latest results into `site/`, then serves both halves at `http://127.0.0.1:4173` with a throwaway portal account that it prints at start. Press `Ctrl+C` to stop.
+`npm run site` copies the engine and the latest results into `site/`, then serves both halves at `http://127.0.0.1:4173` with a local-only login that it prints at start. Press `Ctrl+C` to stop.
 
 | File | Controls |
 |---|---|
