@@ -10,6 +10,9 @@ export interface Control {
   weight: number;
   critical: boolean;
   description?: string;
+  /** Explanatory only (shown on the site); never read by the engine. */
+  risk?: string;
+  requires?: string;
 }
 
 export interface ControlResult {

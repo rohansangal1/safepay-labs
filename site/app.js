@@ -1,4 +1,4 @@
-import { score } from './score.js';
+import { score, COVERAGE_THRESHOLD } from './score.js';
 
 const REPO = 'https://github.com/rohansangal1/payment-integration-lab/blob/main/';
 const VIEWS = ['overview', 'benchmark', 'sandbox', 'roadmap', 'library', 'docs'];
@@ -53,6 +53,7 @@ function buildFixtures(assessments) {
     source: 'lab',
     provider: 'Local lab',
     architecture: 'Custom',
+    defects: run.defects,
     results: run.results,
     score: score(controls, run.results),
   }));
@@ -215,17 +216,47 @@ function showFixture(id) {
 
 // ---------- Sandbox ----------
 
+const SANDBOX_DEFAULT = 'F03';
+const titles = ids => ids.map(id => esc(controls.find(c => c.id === id).title)).join(', ');
+// A control's share of the total weight, as points out of 100.
+const points = c => Math.round((100 * c.weight) / controls.reduce((sum, x) => sum + x.weight, 0));
+
 function renderControls() {
-  $('control-list').innerHTML = controls.map(c => `
+  // The defect-free lab run shows which checks exist for each control today.
+  const baseline = fixtures.find(f => f.source === 'lab' && !f.defects.length);
+  $('control-list').innerHTML = controls.map(c => {
+    const checks = baseline?.results[c.id]?.checks || [];
+    return `
     <div class="control">
-      <div>
-        <span class="control-name">${esc(c.title)}</span>
-        <small>${c.weight} weight${c.critical ? ' · critical' : ''}</small>
+      <div class="control-row">
+        <button type="button" class="control-toggle" aria-expanded="false" aria-controls="d-${c.id}">
+          <span class="control-name">${esc(c.title)}${c.critical ? ' <em class="tag">critical</em>' : ''}</span>
+          <small>${c.weight} weight</small>
+        </button>
+        <div class="segmented" role="group" aria-label="${esc(c.title)}" id="o-${c.id}">
+          ${['pass', 'fail', 'unknown'].map(s => `<button type="button" data-control="${c.id}" data-status="${s}" class="${s}">${s[0].toUpperCase() + s.slice(1)}</button>`).join('')}
+        </div>
       </div>
-      <div class="segmented" role="group" aria-label="${esc(c.title)}" id="o-${c.id}">
-        ${['pass', 'fail', 'unknown'].map(s => `<button type="button" data-control="${c.id}" data-status="${s}" class="${s}">${s[0].toUpperCase() + s.slice(1)}</button>`).join('')}
+      <div class="control-detail" id="d-${c.id}" hidden>
+        <p>${esc(c.description)}</p>
+        <dl class="facts">
+          <div><dt>Without it</dt><dd>${esc(c.risk)}</dd></div>
+          <div><dt>Evidence for a pass</dt><dd>${esc(c.requires)}</dd></div>
+          <div><dt>Lab checks</dt><dd>${checks.length
+            ? `<ul class="checks">${checks.map(k => `<li>${esc(k.description)}</li>`).join('')}</ul>`
+            : 'No automated check yet, so lab runs leave this control unknown.'}</dd></div>
+          <div><dt>Effect on the score</dt><dd id="e-${c.id}"></dd></div>
+        </dl>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+  $('control-list').querySelectorAll('.control-toggle').forEach(b => {
+    b.addEventListener('click', () => {
+      const open = b.getAttribute('aria-expanded') !== 'true';
+      b.setAttribute('aria-expanded', open);
+      $(b.getAttribute('aria-controls')).hidden = !open;
+    });
+  });
   $('control-list').querySelectorAll('button[data-control]').forEach(b => {
     b.addEventListener('click', () => {
       sandbox[b.dataset.control] = { status: b.dataset.status, evidence: 'synthetic:sandbox:' + b.dataset.control };
@@ -234,30 +265,78 @@ function renderControls() {
   });
 }
 
+// What a control's current outcome does to the range and the verdict.
+function effectOf(c, status) {
+  const p = points(c);
+  if (status === 'pass') return `Passing adds ${p} points to both ends of the range.`;
+  if (status === 'fail') {
+    return `Failing takes ${p} points off the top of the range. ` + (c.critical
+      ? 'It is a critical control, so the verdict becomes Critical failure whatever the score.'
+      : 'It is not critical, so on its own it does not change the verdict.');
+  }
+  return `Unknown widens the range by ${p} points: they are not credited at the low end but still possible at the high end. ` + (c.critical
+    ? 'It is a critical control, so the verdict cannot be Assessed until it is tested.'
+    : `It also lowers coverage, which must reach ${COVERAGE_THRESHOLD}% for an Assessed verdict.`);
+}
+
+// Plain-language reading of the verdict and the range.
+function explainScore(s, weight) {
+  let verdict;
+  if (s.gate === 'critical-failure') {
+    verdict = `<b>${titles(s.criticalFailures)}</b> failed. A failed critical control overrides the score, however high it is.`;
+  } else if (s.gate === 'insufficient-evidence') {
+    const why = [];
+    if (s.criticalUnknown.length) why.push(`<b>${titles(s.criticalUnknown)}</b> ${s.criticalUnknown.length > 1 ? 'are critical controls' : 'is a critical control'} that ${s.criticalUnknown.length > 1 ? 'have' : 'has'} not been tested.`);
+    if (s.coverage < COVERAGE_THRESHOLD) why.push(`Only ${round(s.coverage)}% of the weight has been tested; the threshold is ${COVERAGE_THRESHOLD}%.`);
+    verdict = why.join(' ') + ' That is too little evidence to rate this integration.';
+  } else {
+    const failed = controls.filter(c => sandbox[c.id].status === 'fail').map(c => c.id);
+    verdict = `Every critical control passed and at least ${COVERAGE_THRESHOLD}% of the weight has been tested. This does not mean safe or certified.`
+      + (failed.length ? ` <b>${titles(failed)}</b> still failed.` : '');
+  }
+  const range = `${weight.pass} of 100 points are backed by passing evidence.`
+    + (weight.fail ? ` ${weight.fail} are lost to failed controls.` : '')
+    + (weight.unknown
+      ? ` ${weight.unknown} are untested, so the score lies somewhere between ${round(s.lower)} and ${round(s.upper)}.`
+      : ' Nothing is untested, so the range is a single number.');
+  return `<p>${verdict}</p><p>${range}</p>`;
+}
+
 function renderScore() {
+  const weight = { pass: 0, fail: 0, unknown: 0 };
   controls.forEach(c => {
+    const status = sandbox[c.id].status;
+    weight[status] += points(c);
     $('o-' + c.id).querySelectorAll('button').forEach(b => {
-      const on = b.dataset.status === sandbox[c.id].status;
+      const on = b.dataset.status === status;
       b.classList.toggle('on', on);
       b.setAttribute('aria-pressed', on);
     });
+    $('e-' + c.id).textContent = effectOf(c, status);
   });
   const s = score(controls, sandbox);
   $('s-range').textContent = `${round(s.lower)}–${round(s.upper)}`;
-  $('s-track-fill').style.left = (s.lower ?? 0) + '%';
-  $('s-track-fill').style.width = ((s.upper ?? 0) - (s.lower ?? 0)) + '%';
+  // Passed | unknown | failed: the range runs from the end of passed to the end of unknown.
+  ['pass', 'unknown', 'fail'].forEach(k => { $('s-' + k).style.width = weight[k] + '%'; });
+  $('s-legend').innerHTML = `<span class="outcome pass">Passed ${weight.pass}</span><span class="outcome unknown">Unknown ${weight.unknown}</span><span class="outcome fail">Failed ${weight.fail}</span>`;
   $('s-coverage').textContent = round(s.coverage) + '%';
   $('s-observed').textContent = s.observed === null ? 'Unassessed' : round(s.observed) + '%';
-  const detail = s.criticalFailures.length
-    ? ` · ${s.criticalFailures.length} critical failed`
-    : s.criticalUnknown.length ? ' · critical evidence missing' : '';
   $('s-gate').className = 'verdict ' + s.gate;
-  $('s-gate').textContent = VERDICTS[s.gate] + detail;
+  $('s-gate').textContent = VERDICTS[s.gate];
+  $('s-explain').innerHTML = explainScore(s, weight);
 }
 
 function resetSandbox() {
-  sandbox = structuredClone(fixtures.find(f => f.id === 'F03').results);
+  const f = fixtures.find(x => x.id === $('s-preset').value);
+  // Lab runs only carry the controls that have checks; the rest start unknown.
+  sandbox = Object.fromEntries(controls.map(c => [c.id, structuredClone(f.results[c.id] || { status: 'unknown' })]));
   renderScore();
+}
+
+function renderPresets() {
+  $('s-preset').innerHTML = fixtures.map(f =>
+    `<option value="${f.id}"${f.id === SANDBOX_DEFAULT ? ' selected' : ''}>${f.id} · ${esc(f.label)}</option>`).join('');
+  $('s-preset').addEventListener('change', resetSandbox);
 }
 
 // ---------- Roadmap ----------
@@ -340,6 +419,7 @@ async function init() {
   renderFixtures();
   ['f-source', 'f-provider', 'f-arch', 'f-verdict'].forEach(id => $(id).addEventListener('change', renderFixtures));
   renderControls();
+  renderPresets();
   $('reset').addEventListener('click', resetSandbox);
   resetSandbox();
   renderRoadmap();
