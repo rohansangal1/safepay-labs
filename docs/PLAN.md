@@ -40,7 +40,9 @@ emulators + **scope gate**; open-source shops in Docker (external validity, coor
   optimization, not vendor ranking. Generated code is untrusted → sandboxed per SAFETY.md. Model
   list → an ADR.
 
-**D — Research site.** Reframe headline/overview; add an **Insights** view (architecture-sweep
+**D — Research site.** Split into a public landing page (`public/`) and a researcher-only portal
+(`site/`, behind `api/portal.py`) — [ADR 008](decisions/008-public-landing-and-researcher-portal.md).
+Still to do in the portal: reframe headline/overview; add an **Insights** view (architecture-sweep
 charts from `data/runs`); **About** (independent researcher; personal project); **security &
 privacy disclosure** (owned/authorized-only scope, synthetic data, no live testing, retention
 ceilings, PCI/GDPR disclaimers, responsible disclosure); state no analytics/cookies. Reuse existing

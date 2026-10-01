@@ -1,6 +1,6 @@
 # 006. Public site and publishing rules
 
-- **Status:** Accepted, 2026-09-27
+- **Status:** Accepted, 2026-09-27. Amended by [008](008-public-landing-and-researcher-portal.md): `site/` is now the researcher portal and `public/` is the public page.
 
 ## Decision
 `site/` becomes the public face of the project: method, results and the reference-checkout lab runs. Before it goes public:

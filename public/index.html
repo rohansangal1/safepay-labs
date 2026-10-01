@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment Integration Lab</title>
+  <meta name="description" content="Independent research measuring whether online payment integrations survive forged, replayed, reordered and mismatched payment events.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="landing.css">
+  <script type="module" src="landing.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#top"><span class="logo">P</span>Payment Integration Lab</a>
+      <nav aria-label="Sections">
+        <a href="#problem">The problem</a>
+        <a href="#approach">What we do</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#safety">Safety</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="chip"><span class="dot"></span>Research in progress</span>
+        <h1>A shop gets a message saying “payment received.” What if the message is fake?</h1>
+        <p class="lede">Payment Integration Lab is an independent research project measuring whether online payment integrations survive forged, replayed, reordered and mismatched payment events.</p>
+        <div class="actions">
+          <a class="button primary" href="#approach">See how it works</a>
+          <a class="button" href="#roadmap">Roadmap</a>
+        </div>
+      </div>
+
+      <div class="hero-art" aria-hidden="true">
+        <div class="event good">
+          <div class="event-head"><span>Payment message</span><b>Accepted</b></div>
+          <dl>
+            <div><dt>Order</dt><dd>#1042</dd></div>
+            <div><dt>Amount</dt><dd>$48.00</dd></div>
+            <div><dt>Signature</dt><dd>Verified</dd></div>
+          </dl>
+        </div>
+        <div class="event bad">
+          <div class="event-head"><span>Payment message</span><b>Rejected</b></div>
+          <dl>
+            <div><dt>Order</dt><dd>#1042</dd></div>
+            <div><dt>Amount</dt><dd>$0.48</dd></div>
+            <div><dt>Signature</dt><dd>Forged</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem -->
+    <section id="problem" class="section">
+      <div class="section-head">
+        <h2>The problem</h2>
+        <p>When you pay online, the shop usually doesn't see your card. A payment company handles the money, then sends the shop a short message: <em>this order was paid</em>. The shop ships on the strength of that message. If the shop doesn't check it carefully, a made-up, repeated or altered message can cost real money.</p>
+      </div>
+      <div class="cards five">
+        <article class="card">
+          <span class="icon banknote-x"></span>
+          <h3>Paid too little</h3>
+          <p>An order is marked paid for less than it cost.</p>
+        </article>
+        <article class="card">
+          <span class="icon package-plus"></span>
+          <h3>Shipped twice</h3>
+          <p>One payment is counted again and the goods go out twice.</p>
+        </article>
+        <article class="card">
+          <span class="icon package-x"></span>
+          <h3>Order lost</h3>
+          <p>The customer paid, but the shop never finds out.</p>
+        </article>
+        <article class="card">
+          <span class="icon users"></span>
+          <h3>Wrong account</h3>
+          <p>A payment is credited to somebody else's order.</p>
+        </article>
+        <article class="card">
+          <span class="icon receipt"></span>
+          <h3>Refund mismatch</h3>
+          <p>Money is refunded but the order still counts as paid.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Approach -->
+    <section id="approach" class="section">
+      <div class="section-head">
+        <h2>What we do</h2>
+        <p>We build checkouts in our own lab, send them the kinds of bad messages an attacker would, and measure what happens to the money and the orders.</p>
+      </div>
+
+      <div class="flow" role="img" aria-label="A customer pays a payment provider, which sends a payment message to the shop. In the lab we also send the shop forged, replayed, reordered and mismatched messages to see whether it is fooled.">
+        <div class="flow-row">
+          <div class="node">Customer<small>places an order</small></div>
+          <span class="arrow"></span>
+          <div class="node">Payment provider<small>takes the money</small></div>
+          <span class="arrow label">payment message</span>
+          <div class="node strong">Shop<small>decides whether to ship</small></div>
+        </div>
+        <div class="flow-attack">
+          <div class="node attacker">Our test harness<small>plays the attacker</small></div>
+          <ul class="attacks">
+            <li><b>Forged</b> a message the provider never sent</li>
+            <li><b>Replayed</b> a real message sent again</li>
+            <li><b>Reordered</b> real messages in the wrong order</li>
+            <li><b>Mismatched</b> the right message for the wrong order or amount</li>
+          </ul>
+        </div>
+      </div>
+
+      <ol class="cards three steps">
+        <li class="card">
+          <span class="icon flask-conical"></span>
+          <h3>Build a careful reference</h3>
+          <p>A checkout we wrote ourselves that handles every case correctly, plus copies with one deliberate mistake each. They prove our tests can tell safe from unsafe.</p>
+        </li>
+        <li class="card">
+          <span class="icon shield-check"></span>
+          <h3>Attack it locally</h3>
+          <p>Every test runs on our own computers against software we own or run ourselves. No real shop, card or customer is involved.</p>
+        </li>
+        <li class="card">
+          <span class="icon scale"></span>
+          <h3>Measure the harm</h3>
+          <p>We record what went wrong in money and orders, and give each checkout an assurance score that keeps anything we couldn't test visible rather than assuming it passed.</p>
+        </li>
+      </ol>
+
+      <div class="providers">
+        <p>Message formats we plan to emulate locally</p>
+        <div class="provider-list">
+          <span class="provider"><span class="brand-mark stripe" role="img" aria-label="Stripe"></span>Stripe</span>
+          <span class="provider"><span class="brand-mark square" role="img" aria-label="Square"></span>Square</span>
+        </div>
+        <small>Stripe and Square are trademarks of their owners. This project is not affiliated with or endorsed by either company, and does not test their systems.</small>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section id="roadmap" class="section">
+      <div class="section-head">
+        <h2>Roadmap</h2>
+        <p>Six stages, from the measuring tools to a published paper. <span id="roadmap-total"></span></p>
+      </div>
+      <ol class="roadmap">
+        <li data-phase="0">
+          <h3>Foundation</h3>
+          <p>Project structure, automated checks and the written rules the research follows.</p>
+          <div class="progress"><div></div></div><span class="count"></span>
+        </li>
+        <li data-phase="1">
+          <h3>Measuring tools</h3>
+          <p>The reference checkout, the tests that attack it, and the way harm is counted.</p>
+          <div class="progress"><div></div></div><span class="count"></span>
+        </li>
+        <li data-phase="2">
+          <h3>Realism</h3>
+          <p>Local stand-ins that speak the same message formats as real payment providers.</p>
+          <div class="progress"><div></div></div><span class="count"></span>
+        </li>
+        <li data-phase="3">
+          <h3>Pilot</h3>
+          <p>A small trial run, then the study plan is published before the main run begins.</p>
+          <div class="progress"><div></div></div><span class="count"></span>
+        </li>
+        <li data-phase="4">
+          <h3>Main study</h3>
+          <p>The full set of tests. Anything found in open-source software is reported privately to its maintainers first.</p>
+          <div class="progress"><div></div></div><span class="count"></span>
+        </li>
+        <li data-phase="5">
+          <h3>Release</h3>
+          <p>The paper, a free tool for checking your own checkout, and the data.</p>
+          <div class="progress"><div></div></div><span class="count"></span>
+        </li>
+      </ol>
+    </section>
+
+    <!-- Safety -->
+    <section id="safety" class="section">
+      <div class="section-head">
+        <h2>How we keep it safe</h2>
+      </div>
+      <div class="cards three">
+        <article class="card">
+          <h3>Only our own software</h3>
+          <p>We test software we wrote or open-source software we run on our own machines. We never probe a live shop or payment system we don't own.</p>
+        </article>
+        <article class="card">
+          <h3>No real money or card data</h3>
+          <p>Every order, payment and customer in the lab is made up. Nothing is charged and nothing is shipped.</p>
+        </article>
+        <article class="card">
+          <h3>Fix first, publish second</h3>
+          <p>If we find a weakness in someone else's open-source software, its maintainers hear about it privately before anything is published.</p>
+        </article>
+      </div>
+      <p class="note">The assurance score is a research measure. It is not a PCI certification or a guarantee that a checkout is secure.</p>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="section about">
+      <h2>About</h2>
+      <p>An independent research project, working toward a public paper, tool and dataset. Detailed methods and results will appear here once they have been reviewed for release. This site uses no cookies, analytics or third-party services.</p>
+    </section>
+  </main>
+
+  <footer>Payment Integration Lab · Research in progress</footer>
+</body>
+</html>

@@ -17,6 +17,7 @@ const DOCS = [
   ['docs/DATA_AND_TOOLS.md', 'Dataset and tooling', 'Dataset units, evidence records and execution architecture.'],
   ['docs/decisions/README.md', 'Decision records', 'Why the project is shaped the way it is (ADRs).'],
   ['docs/GITHUB_SETUP.md', 'Repository setup', 'CI, repository settings to enable and backlog.'],
+  ['docs/PORTAL_ACCESS.md', 'Portal access', 'Getting an account, signing in, and managing researcher accounts from the terminal.'],
 ];
 
 const $ = id => document.getElementById(id);

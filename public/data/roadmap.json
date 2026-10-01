@@ -1,0 +1,32 @@
+[
+  {
+    "phase": "0 Foundation",
+    "done": 3,
+    "total": 3
+  },
+  {
+    "phase": "1 Measurement core",
+    "done": 1,
+    "total": 7
+  },
+  {
+    "phase": "2 Realism",
+    "done": 0,
+    "total": 4
+  },
+  {
+    "phase": "3 Subjects & pilot",
+    "done": 0,
+    "total": 4
+  },
+  {
+    "phase": "4 Main study",
+    "done": 0,
+    "total": 3
+  },
+  {
+    "phase": "5 Release",
+    "done": 0,
+    "total": 3
+  }
+]
