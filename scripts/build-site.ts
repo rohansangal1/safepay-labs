@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { stripTypeScriptTypes } from 'node:module';
 import { serialize, validate, type Entry } from './library.ts';
-import { publicRoadmap, type Milestone } from './roadmap.ts';
 
 const root = path.join(import.meta.dirname, '..');
 const from = (...p: string[]) => path.join(root, ...p);
@@ -23,9 +22,6 @@ const errors = validate(library);
 if (errors.length) throw new Error('data/library.json is invalid:\n' + errors.join('\n'));
 fs.writeFileSync(from('site/data/library.json'), serialize(library.filter(e => e.status !== 'excluded')));
 
-// The public landing page gets phase-level progress only; milestone detail stays in the portal.
-const milestones: Milestone[] = JSON.parse(fs.readFileSync(from('site/data/milestones.json'), 'utf8'));
-fs.mkdirSync(from('public/data'), { recursive: true });
-fs.writeFileSync(from('public/data/roadmap.json'), JSON.stringify(publicRoadmap(milestones), null, 2) + '\n');
-
-console.log('Built site/score.js, site/data/controls.json, site/data/assessments.json, site/data/library.json, public/data/roadmap.json');
+// The public landing page (public/) is static and carries no generated data: nothing about the
+// roadmap or results leaves the researcher portal.
+console.log('Built site/score.js, site/data/controls.json, site/data/assessments.json, site/data/library.json');

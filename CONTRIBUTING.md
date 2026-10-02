@@ -39,7 +39,7 @@ npm run test:portal       # ruff + pytest
 
 ## Ground rules
 - **`packages/` has zero runtime dependencies.** The engine, checks and CLI must stay easy to audit and install. `lab/` may add pinned dependencies when a harness needs them.
-- **Generated files are committed and must be current:** `data/runs/*.json`, `site/score.js`, `site/data/controls.json`, `site/data/assessments.json`, `public/data/roadmap.json`. Change the source, then run `npm run assess && npm run build:site`.
+- **Generated files are committed and must be current:** `data/runs/*.json`, `site/score.js`, `site/data/controls.json`, `site/data/assessments.json`. Change the source, then run `npm run assess && npm run build:site`.
 - **Metric changes are versioned.** Changing a control, weight, gate or threshold needs an ADR in `docs/decisions/` and a metric version bump. Don't compare scores across versions.
 - **New checks need a failing case.** Each check must be shown to fail on a subject that lacks the control (a seeded or mutated defect), and to pass on the reference.
 - **Scope and safety.** Nothing in this repo may target systems you don't own or aren't authorized to test. Read [docs/SAFETY.md](docs/SAFETY.md). Never commit real card data, live keys, raw HAR files or unredacted traces.

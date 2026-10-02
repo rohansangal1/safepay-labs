@@ -40,13 +40,13 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
 - **`packages/` has zero runtime dependencies** (auditable engine/checks/CLI). `lab/` may add
   pinned deps. See [ADR 003](docs/decisions/003-dependencies-and-layout.md).
 - **Generated files are committed and must be current:** `data/runs/*.json`, `site/score.js`,
-  `site/data/*`, `public/data/*`. Regenerate with `npm run assess && npm run build:site`; `npm run check:generated`
+  `site/data/*`. Regenerate with `npm run assess && npm run build:site`; `npm run check:generated`
   enforces it.
 - **Metric changes are versioned** and need an ADR + a metric-version bump ([CONTRIBUTING.md](CONTRIBUTING.md)).
 - **Every new check needs a failing case** on a subject lacking the control, and must pass on the reference.
 - **Never commit** real card data, live keys, raw HAR files or unredacted traces.
 - **Nothing from the portal goes in `public/`.** Research data and results stay under `site/`; the
-  landing page gets phase-level roadmap counts only. Researcher passwords and `DATABASE_URL` never
+  landing page shows no roadmap or results at all. Researcher passwords and `DATABASE_URL` never
   enter the repo.
 
 ## Layout
@@ -55,8 +55,9 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
 - `scripts/` — `build-site.ts`, the daily library updater (`update-library.ts`, `library.ts`).
 - `analysis/` — Python (uv, 3.12): reads `data/runs/` and `data/library.json`; PIAS run loaders,
   cluster bootstrap, and library exploratory analysis. Reads only; never writes into `data/`.
-- `public/` — public landing page (static; idea, mission, roadmap). No results. Images are vendored
-  with sources in `public/assets/SOURCES.md`.
+- `public/` — public landing page (static; idea and mission; dark navy/violet theme). No results and
+  no roadmap. Fonts, icons and photos are vendored with sources in `public/assets/SOURCES.md`; the
+  CSP in `vercel.json` blocks inline styles/scripts and every other origin.
 - `site/` — researcher portal (built from `packages/core` + `data/`). **Not public**: served only
   through `api/portal.py` at `/devs/`, after sign-in (form + 90-day session cookie) ([ADR 008](docs/decisions/008-public-landing-and-researcher-portal.md)).
 - `portal/` + `api/portal.py` — Python access layer (FastAPI, argon2-cffi, psycopg; root
