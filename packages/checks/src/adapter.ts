@@ -47,6 +47,16 @@ export interface NeutralEvent {
   billing?: { email: string; cardNumber: string };
 }
 
+/** What the provider holds for one payment. */
+export interface LedgerEntry {
+  payment: string;
+  /** The order the payment was created for. */
+  order: string;
+  captured: number;
+  refunded: number;
+  currency: string;
+}
+
 /** Provider-neutral names for what an audit trail records. The adapter maps the subject's own. */
 export type AuditAction = 'paid' | 'fulfilled' | 'refunded' | 'payment-failed' | 'event-rejected';
 
@@ -105,6 +115,19 @@ export interface SubjectAdapter {
     captureWithoutEvent(payment: PaymentRef): Promise<void>;
     /** Runs whatever the subject does to recover: worker retries, reconciliation jobs. */
     recover(): Promise<void>;
+  };
+
+  /**
+   * The provider's own record of money moved, for subjects whose provider the harness plays or
+   * can query. The harm oracle reads it as ground truth; the subject may query the same record
+   * server-to-server when it reconciles.
+   */
+  readonly ledger?: {
+    /** Captures `amount` (the payment's full amount when omitted) without delivering any event. */
+    capture(payment: PaymentRef, amount?: number): Promise<void>;
+    /** Refunds everything captured for the payment, without delivering any event. */
+    refund(payment: PaymentRef): Promise<void>;
+    entries(): Promise<LedgerEntry[]>;
   };
 
   /**

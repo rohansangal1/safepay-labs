@@ -49,8 +49,8 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
   `lab` (measurement core/harness), `research` (protocol/metric/data), `ci`, `infra`.
 - **`packages/` has zero runtime dependencies** (auditable engine/checks/CLI). `lab/` may add
   pinned deps. See [ADR 003](docs/decisions/003-dependencies-and-layout.md).
-- **Generated files are committed and must be current:** `data/runs/*.json`, `site/score.js`,
-  `site/data/*`. Regenerate with `npm run assess && npm run build:site`; `npm run check:generated`
+- **Generated files are committed and must be current:** `data/runs/*.json`, `data/harm/*.json`,
+  `site/score.js`, `site/data/*`. Regenerate with `npm run assess && npm run harm && npm run build:site`; `npm run check:generated`
   enforces it.
 - **Metric changes are versioned** and need an ADR + a metric-version bump ([CONTRIBUTING.md](CONTRIBUTING.md)).
 - **Every new check needs a failing case** on a subject lacking the control, and must pass on the reference.
@@ -61,6 +61,8 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
 
 ## Layout
 - `packages/core` — PIAS engine (TypeScript, zero deps), control catalog, tests.
+- `packages/oracle` — harm oracle (zero deps): end-to-end scenarios judged from the provider ledger
+  and fulfillment records. Shares only `SubjectAdapter` with the checks; never feeds the score.
 - `lab/` — reference checkout, fake provider/signature emulator, assessment harness, seeded defects.
 - `scripts/` — `build-site.ts`, the daily library updater (`update-library.ts`, `library.ts`).
 - `analysis/` — Python (uv, 3.12): reads `data/runs/` and `data/library.json`; PIAS run loaders,
@@ -75,7 +77,7 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
 - `portal/` + `api/portal.py` — Python access layer (FastAPI, argon2-cffi, psycopg; root
   `pyproject.toml`/`uv.lock`): the gate, the admin page (`/devs/admin`), the researcher and session store (Neon Postgres) and the
   account CLI. Account changes go through `portal/accounts.py` so page and CLI stay identical.
-- `data/` — `runs/` (assessment outputs), `library.json` (knowledge base), `library-queries.json`.
+- `data/` — `runs/` (assessment outputs), `harm/` (harm-oracle outputs), `library.json` (knowledge base), `library-queries.json`.
 - `docs/` — research plan, metric, safety, literature, dataset/tools, and `decisions/` (ADRs).
 
 ## Commands
@@ -86,6 +88,7 @@ npm test                 # engine, lab and script tests
 npm run typecheck
 npm run assess           # reference checkout → data/runs/lab-reference.json
 npm run evidence         # same run with commit and timestamps → data/evidence/*.jsonl (git-ignored)
+npm run harm             # harm oracle on the reference checkout → data/harm/lab-reference.json
 npm run build:site       # regenerate site/ from source + data
 npm run site             # build + serve landing (/) and portal (/devs/) at http://127.0.0.1:4173
 npm run researcher -- list   # terminal fallback for portal accounts; admins normally use /devs/admin (docs/PORTAL_ACCESS.md)
@@ -117,12 +120,15 @@ uv run python -m piaslab.library_report   # → analysis/reports/library/ (git-i
 - **On `main` (PR #17):** lifecycle and recovery checks (24 checks across 8
   controls, 11 seeded defects). The reference checkout handles full refunds and reconciles dropped
   events; `SubjectAdapter` gained `activeFulfillments` and optional `faults`.
-- **On branch `feat/secrets-data-audit-checks`:** secrets, data-minimization and audit checks (30
+- **On `main` (PR #18):** secrets, data-minimization and audit checks (30
   checks across 11 controls, 17 seeded defects; coverage 95). `SubjectAdapter` gained optional
   `artifacts` (secrets, responses, logs, stored rows, audit trail); the reference checkout writes a
   log and an `audit` table; evidence schema 1.1 adds two oracles ([ADR 010](docs/decisions/010-evidence-schema-1-1-artifact-oracles.md)).
   Milestone 7 is then done apart from browser integrity (needs the browser harness).
-- **Next (Phase 1):** harm oracle; mutation-based defects; metric v1 decisions. Then emulators
+- **On branch `feat/harm-oracle`:** harm oracle (`packages/oracle`, 12 scenarios, `npm run harm`).
+  `SubjectAdapter` gained optional `ledger`; the fake provider's ledger records captures and refunds.
+  Harm results are not in the portal or the Python loaders yet.
+- **Next (Phase 1):** mutation-based defects; metric v1 decisions; harm results in the portal and loaders. Then emulators
   (Phase 2), then containers, architecture variants and run ingest into the portal (Phase 3).
 
 ## Deployment

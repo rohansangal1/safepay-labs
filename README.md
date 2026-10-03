@@ -9,6 +9,7 @@ Status: research in progress, targeting a preprint. PIAS v0.1 is a draft metric,
 |---|---|---|
 | `packages/core/` | PIAS score engine and control catalog | None (runtime) |
 | `packages/checks/` | Versioned check registry, `SubjectAdapter` interface and runner | None (runtime) |
+| `packages/oracle/` | Harm oracle: end-to-end scenarios that measure money and state outcomes; never feeds the score | None (runtime) |
 | `lab/emulator/` | Fake payment provider: event builder and HMAC webhook signing | None so far |
 | `lab/subjects/reference/` | Local reference checkout, its adapter, 17 seeded defects | None so far |
 | `data/runs/` | Assessment results (generated) | |
@@ -72,6 +73,8 @@ There are two halves ([ADR 008](docs/decisions/008-public-landing-and-researcher
 State lives in `node:sqlite`. A verified success event records the payment and a fulfillment job in one transaction; the job then runs from that outbox. If fulfillment fails or the process stops, the job stays pending and runs on the next event or restart. Unique indexes allow one fulfillment per order, however many events arrive. A full refund reverses the fulfillment and blocks a success event that arrives late, and `reconcile()` asks the provider about orders whose event never arrived. Every payment and order state change, and every rejected webhook, writes a row to an append-only `audit` table in the same transaction. Log lines carry IDs and outcomes only, never a payload or the webhook secret.
 
 `npm run assess` runs the 30 registered checks in `packages/checks` through the checkout's `SubjectAdapter` ([adapter.ts](lab/subjects/reference/adapter.ts)). They map to eleven PIAS controls (amount, binding, authenticity, fulfillment, authorization, idempotency, lifecycle, recovery, secrets, data minimization, audit). Each check is versioned and records its observation layer and oracle; the webhook checks read the checkout's fulfillment records, not its HTTP responses. The secrets, data and audit checks read what the checkout leaves behind (responses, log lines, stored rows, audit trail) and cover that runtime evidence only. A check that can't run leaves its control unknown, never passed. The baseline passes all eleven and is rated *assessed* with a range of 95–100; browser integrity has no checks yet and stays unknown. Each of the seventeen seeded defects (`DEFECTS` in `app.ts`) is caught by its own control and no other, and the tests enforce this.
+
+`npm run harm` runs the harm oracle (`packages/oracle`, [ADR 002](docs/decisions/002-harm-oracle.md)) and writes `data/harm/lab-reference.json`. It is separate from the checks and never feeds the score. Twelve end-to-end scenarios (an honest purchase, a tampered price, a forged event, a retry storm, a refund, an outage, a dropped webhook and others) play out against a fresh checkout each. Afterwards the oracle compares the fake provider's ledger (what was captured and refunded) with the checkout's fulfillment records and reports five harms: underpayment, double fulfillment, cross-account access, lost order and inconsistent refund. The baseline shows none. The eleven defects in the money path each cause one kind of harm; the six leak and audit defects cause none, because they move no money on their own.
 
 To explore by hand:
 ```sh

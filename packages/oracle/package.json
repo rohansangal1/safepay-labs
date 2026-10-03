@@ -1,0 +1,14 @@
+{
+  "name": "@pias/oracle",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Harm oracle: end-to-end scenarios that measure money and state outcomes. Never feeds the PIAS score. Zero runtime dependencies.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@pias/checks": "0.1.0"
+  }
+}
