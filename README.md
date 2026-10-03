@@ -1,8 +1,8 @@
 # SafePay Labs
 
-**Do AI coding agents build safe payment integrations?** This project measures it. Agent-built Stripe and Square integrations are attacked with forged, replayed and mismatched payment events. The damage is measured in money and order state, and each integration is scored with **PIAS**, an evidence-aware assurance score that keeps unchecked controls visible instead of counting them as passes.
+**Which payment-integration designs actually prevent money-level harm?** This project measures it. Owned Stripe and Square checkout variants, each in its own sealed container, are attacked with forged, replayed and mismatched payment events, with security layers switched on and off. The damage is measured in money and order state, and each integration is scored with **PIAS**, an evidence-aware assurance score that keeps unchecked controls visible instead of counting them as passes.
 
-Status: research in progress, targeting a preprint. PIAS v0.1 is a draft metric, not a PCI assessment or a probability of compromise. See the [research plan](docs/RESEARCH_PLAN.md).
+Status: research in progress, targeting a preprint. PIAS v0.1 is a draft metric, not a PCI assessment or a probability of compromise. The results will feed integration guidance for developers and their coding agents, and an open-source tool for end-to-end payment testing without real card data. See the [research plan](docs/RESEARCH_PLAN.md).
 
 ## Repository layout
 | Path | What's there | Dependencies |
@@ -18,7 +18,7 @@ Status: research in progress, targeting a preprint. PIAS v0.1 is a draft metric,
 | `scripts/` | Build helpers | |
 | `docs/` | Protocol, metric, literature, safety, [decisions](docs/decisions/README.md) | |
 
-Planned: `packages/cli` (zero-dependency), `lab/generator` and `lab/harness`, `analysis/` (Python). See [ADR 003](docs/decisions/003-dependencies-and-layout.md).
+Planned: `lab/subjects/variants/` (architecture variants), container isolation, and an open-source testing tool starting as `packages/cli` (zero-dependency). See [ADR 003](docs/decisions/003-dependencies-and-layout.md).
 
 ## Setup
 Requires **Node.js 22.13+** (24 recommended, see `.nvmrc`) and [uv](https://docs.astral.sh/uv/) for the local site server. No provider keys are needed.

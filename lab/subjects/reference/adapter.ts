@@ -6,7 +6,7 @@ import type { AddressInfo } from 'node:net';
 import type { NeutralEvent, Reply, Signing, SubjectAdapter } from '@pias/checks';
 import { createCheckout, CATALOG } from './app.ts';
 import { sign } from '../../emulator/signature.ts';
-import type { PaymentEvent } from '../../emulator/provider.ts';
+import { PROVIDER, type PaymentEvent } from '../../emulator/provider.ts';
 
 export const SUBJECT_ID = 'lab:owned-checkout';
 
@@ -34,6 +34,7 @@ export async function openReference(defects: string[] = []): Promise<SubjectAdap
 
   return {
     id: SUBJECT_ID,
+    provider: PROVIDER,
     products: {
       standard: { sku: 'lab-tee', price: CATALOG['lab-tee'].price },
       cheap: { sku: 'lab-sticker', price: CATALOG['lab-sticker'].price },

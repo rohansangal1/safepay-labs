@@ -1,6 +1,6 @@
 # 001. Headline: AI coding agents and payment-integration safety
 
-- **Status:** Accepted, 2026-09-27
+- **Status:** Accepted, 2026-09-27; superseded in part by [007](007-rescope-architectures-and-testing-tool.md) (headline question and the agent experiment)
 - **Supersedes:** the 8 self-written template families in RESEARCH_PLAN draft 0.1
 
 ## Context

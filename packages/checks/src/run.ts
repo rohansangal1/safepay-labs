@@ -1,56 +1,50 @@
 // Runs registered checks against a subject and folds them into PIAS control results.
 import type { ControlResult, Results } from '@pias/core';
 import type { OpenSubject } from './adapter.ts';
-import type { Check, Layer, Oracle } from './registry.ts';
-
-export interface CheckOutcome {
-  id: string;
-  version: number;
-  layer: Layer;
-  oracle: Oracle;
-  description: string;
-  expected: unknown;
-  observed: unknown;
-  pass: boolean;
-  /** Set when the check could not run to completion. Its outcome is then unknown, never pass. */
-  error?: string;
-}
+import { assertEvidence, evidenceRecord, type EvidenceRecord, type RawOutcome, type RunContext } from './evidence.ts';
+import type { Check } from './registry.ts';
 
 export interface CheckedControl extends ControlResult {
-  checks: CheckOutcome[];
+  /** One evidence record per check that ran for this control. */
+  records: EvidenceRecord[];
 }
 
 /**
  * Opens a fresh subject per control so checks for one control can't disturb another's state.
  * A control fails if any check fails, is unknown if a check errored and none failed, and
- * passes only when every check ran and passed.
+ * passes only when every check ran and passed. Every outcome is stored as a validated
+ * evidence record; a record the redaction policy rejects stops the run.
  */
-export async function runChecks(checks: readonly Check[], open: OpenSubject): Promise<Results & Record<string, CheckedControl>> {
+export async function runChecks(checks: readonly Check[], open: OpenSubject, context: RunContext): Promise<Results & Record<string, CheckedControl>> {
   const byControl = new Map<string, Check[]>();
   for (const c of checks) byControl.set(c.control, [...(byControl.get(c.control) ?? []), c]);
+  const now = context.now ?? (() => new Date());
 
   const results: Record<string, CheckedControl> = {};
   for (const [control, group] of byControl) {
     const subject = await open();
     try {
-      const outcomes: CheckOutcome[] = [];
+      const records: EvidenceRecord[] = [];
       for (const c of group) {
-        const base = { id: c.id, version: c.version, layer: c.layer, oracle: c.oracle, description: c.description };
+        const started = now();
+        let outcome: RawOutcome;
         try {
-          const { expected, observed } = await c.run(subject);
-          outcomes.push({ ...base, expected, observed, pass: observed === expected });
+          outcome = await c.run(subject);
         } catch (err) {
-          outcomes.push({ ...base, expected: null, observed: null, pass: false, error: String((err as Error)?.message ?? err) });
+          outcome = { error: String((err as Error)?.message ?? err) || 'unknown error' };
         }
+        const record = evidenceRecord(c, subject, context, outcome, { started, ended: now() });
+        assertEvidence(record, { requireProvenance: Boolean(context.provenance) });
+        records.push(record);
       }
-      const passed = outcomes.filter(o => o.pass).length;
-      const failed = outcomes.some(o => !o.pass && !o.error);
-      const errored = outcomes.some(o => o.error);
+      const passed = records.filter(r => r.status === 'pass').length;
+      const failed = records.some(r => r.status === 'fail');
+      const errored = records.some(r => r.status === 'unknown');
       results[control] = failed
-        ? { status: 'fail', evidence: `${subject.id}:${control}:${passed}/${outcomes.length}-checks-passed`, checks: outcomes }
+        ? { status: 'fail', evidence: `${subject.id}:${control}:${passed}/${records.length}-checks-passed`, records }
         : errored
-          ? { status: 'unknown', checks: outcomes }
-          : { status: 'pass', evidence: `${subject.id}:${control}:${passed}/${outcomes.length}-checks-passed`, checks: outcomes };
+          ? { status: 'unknown', records }
+          : { status: 'pass', evidence: `${subject.id}:${control}:${passed}/${records.length}-checks-passed`, records };
     } finally {
       await subject.close();
     }

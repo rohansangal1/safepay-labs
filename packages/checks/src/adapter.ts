@@ -1,5 +1,5 @@
 // The interface every subject implements so the same checks run against any integration:
-// the reference checkout, an agent-built starter shop or an open-source platform.
+// the reference checkout, an architecture variant or an open-source platform.
 // Checks speak in provider-neutral terms; the adapter turns them into the subject's HTTP
 // routes and its provider's event format and signature scheme.
 
@@ -59,6 +59,8 @@ export interface LineItem {
 export interface SubjectAdapter {
   /** Stable subject identifier, used as the evidence prefix. */
   readonly id: string;
+  /** The payment provider the subject integrates and the API version it speaks, when known. */
+  readonly provider?: { readonly name: string; readonly apiVersion: string };
   /** Two products with different prices, so checks don't hardcode a catalog. */
   readonly products: { readonly standard: Product; readonly cheap: Product };
 

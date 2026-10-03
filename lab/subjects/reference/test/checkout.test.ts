@@ -116,3 +116,28 @@ test('a restart finishes queued fulfillment and still rejects the replayed event
     fs.rmSync(path.dirname(database), { recursive: true, force: true });
   }
 });
+
+test('assess: every outcome is a valid evidence record, reproducible without provenance', async () => {
+  const { validateEvidence } = await import('@pias/checks');
+  const records = async () => Object.values((await assess([])).results).flatMap(c => c.records);
+  const first = await records();
+  assert.equal(first.length, 19);
+  for (const r of first) {
+    assert.deepEqual(validateEvidence(r), [], r.record_id);
+    assert.equal(r.provenance, null);
+    assert.equal(r.provider, 'lab-provider');
+    assert.deepEqual(r.redactions, []);
+  }
+  assert.deepEqual(await records(), first, 'committed fixtures must not change between runs');
+});
+
+test('assess: with provenance, records carry the commit, lock hash and timestamps', async () => {
+  const { validateEvidence } = await import('@pias/checks');
+  const { collectProvenance } = await import('../../../provenance.ts');
+  const provenance = collectProvenance(path.join(import.meta.dirname, '..', '..', '..', '..'));
+  const r = await assess([], { runId: 'LAB-0-test', authorizationId: 'owned-lab', provenance });
+  for (const record of Object.values(r.results).flatMap(c => c.records)) {
+    assert.deepEqual(validateEvidence(record, { requireProvenance: true }), [], record.record_id);
+    assert.equal(record.provenance?.source_commit, provenance.source_commit);
+  }
+});

@@ -43,7 +43,7 @@ Each evidence item should include subject ID, pseudonymous run ID, observation l
 
 Version controls and weights together. Report before/after changes only under the same metric or rescore retained compatible evidence. Publish individual vulnerability severity separately, optionally with CVSS v4.0; CVSS does not measure absence of defects across an integration.
 
-The implemented engine (`packages/core/src/score.ts`) validates status, evidence presence, reviewed N/A and weights. It does not authenticate evidence content. Lab runs on the reference checkout produce real check outcomes for 6 of the 12 controls; the site's F-fixtures are synthetic placeholders. Evidence records with provenance and a check registry are Phase 1 work.
+The implemented engine (`packages/core/src/score.ts`) validates status, evidence presence, reviewed N/A and weights. It does not authenticate evidence content. Each check outcome is stored as an evidence record (schema v1, [ADR 009](decisions/009-evidence-schema-v1.md)) carrying the versions, provenance and redaction policy listed above; subject and pseudonymous run identifiers are plain lab IDs for now. Lab runs on the reference checkout produce real check outcomes for 6 of the 12 controls; the site's F-fixtures are synthetic placeholders.
 
 ## Open questions for Metric v1
 To be settled, each with an ADR, before preregistration:

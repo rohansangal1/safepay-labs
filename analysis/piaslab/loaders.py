@@ -7,19 +7,25 @@ The Node lab writes one JSON file per run set to ``data/runs`` (see
       "kind": "lab-run",
       "target": "...",
       "metric_version": "0.1",
+      "evidence_schema_version": "1.0",
       "runs": [
         {
           "id": "LAB-1", "label": "...", "defects": ["..."],
-          "results": {"<control>": {"status": "pass|fail",
-                                    "checks": [{"id","description","expected","observed","pass"}]}},
+          "results": {"<control>": {"status": "pass|fail|unknown",
+                                    "records": [<evidence record>]}},
           "score": {"lower","upper","observed","coverage","gate",
                     "criticalFailures","criticalUnknown"}
         }
       ]
     }
 
+Each evidence record (schema v1, ``packages/checks/src/evidence.ts``) carries ``check_id``,
+``check_version``, ``observation_layer``, ``oracle``, ``status``, ``expected``, ``observed``,
+``error`` and a ``provenance`` block that is null in committed fixtures.
+
 We validate the parts we depend on and raise :class:`LabRunSchemaError` if they are missing or the
-metric version is one we have not been updated for, rather than producing silently wrong tables.
+metric or evidence schema version is one we have not been updated for, rather than producing
+silently wrong tables.
 """
 
 from __future__ import annotations
@@ -33,6 +39,14 @@ import pandas as pd
 # means the score fields or controls may have shifted, so silent parsing would be misleading.
 SUPPORTED_METRIC_VERSIONS = frozenset({"0.1"})
 
+# Same rule for the evidence schema: a new version may rename or re-mean record fields.
+SUPPORTED_EVIDENCE_SCHEMA_VERSIONS = frozenset({"1.0"})
+
+_RECORD_FIELDS = (
+    "schema_version", "record_id", "check_id", "check_version", "observation_layer", "oracle",
+    "description", "status", "expected", "observed", "error", "provenance",
+)
+_RECORD_STATUSES = frozenset({"pass", "fail", "unknown"})
 _SCORE_FIELDS = ("lower", "upper", "observed", "coverage", "gate")
 
 
@@ -67,6 +81,12 @@ def load_lab_run(source: str | Path | dict) -> dict:
         f"{where}: metric_version {version!r} is not one of {sorted(SUPPORTED_METRIC_VERSIONS)}; "
         "update piaslab.loaders before analyzing it",
     )
+    schema = doc.get("evidence_schema_version")
+    _require(
+        schema in SUPPORTED_EVIDENCE_SCHEMA_VERSIONS,
+        f"{where}: evidence_schema_version {schema!r} is not one of "
+        f"{sorted(SUPPORTED_EVIDENCE_SCHEMA_VERSIONS)}; update piaslab.loaders before analyzing it",
+    )
     _require(
         isinstance(doc.get("runs"), list) and bool(doc["runs"]),
         f"{where}: 'runs' must be a non-empty list",
@@ -77,6 +97,20 @@ def load_lab_run(source: str | Path | dict) -> dict:
             _require(key in run, f"{where}: runs[{i}] missing '{key}'")
         for field in _SCORE_FIELDS:
             _require(field in run["score"], f"{where}: runs[{i}].score missing '{field}'")
+        for control, result in run["results"].items():
+            at = f"{where}: runs[{i}].results.{control}"
+            _require(isinstance(result.get("records"), list), f"{at} missing 'records'")
+            for j, record in enumerate(result["records"]):
+                for field in _RECORD_FIELDS:
+                    _require(field in record, f"{at}.records[{j}] missing '{field}'")
+                _require(
+                    record["schema_version"] == schema,
+                    f"{at}.records[{j}] schema_version differs from the document's",
+                )
+                _require(
+                    record["status"] in _RECORD_STATUSES,
+                    f"{at}.records[{j}] has invalid status {record['status']!r}",
+                )
     return doc
 
 
@@ -113,25 +147,37 @@ def load_runs(source: str | Path | dict) -> pd.DataFrame:
 
 
 def load_checks(source: str | Path | dict) -> pd.DataFrame:
-    """One row per individual check outcome across all runs, tidy for grouping.
+    """One row per evidence record (one check outcome) across all runs, tidy for grouping.
 
-    Columns: ``run_id, control, control_status, check_id, description, expected, observed, passed``.
+    Columns: ``run_id, control, control_status, record_id, check_id, check_version, layer, oracle,
+    description, status, expected, observed, error, passed, source_commit, started_at``. The last
+    two are null for committed fixtures, which carry no provenance. An errored check has status
+    ``unknown`` and ``passed`` False: unknown is never a pass.
     """
     doc = load_lab_run(source)
     rows = []
     for run in doc["runs"]:
         for control, result in run["results"].items():
-            for check in result.get("checks", []):
+            for record in result["records"]:
+                provenance = record["provenance"] or {}
                 rows.append(
                     {
                         "run_id": run["id"],
                         "control": control,
                         "control_status": result.get("status"),
-                        "check_id": check.get("id"),
-                        "description": check.get("description"),
-                        "expected": check.get("expected"),
-                        "observed": check.get("observed"),
-                        "passed": bool(check.get("pass")),
+                        "record_id": record["record_id"],
+                        "check_id": record["check_id"],
+                        "check_version": record["check_version"],
+                        "layer": record["observation_layer"],
+                        "oracle": record["oracle"],
+                        "description": record["description"],
+                        "status": record["status"],
+                        "expected": record["expected"],
+                        "observed": record["observed"],
+                        "error": record["error"],
+                        "passed": record["status"] == "pass",
+                        "source_commit": provenance.get("source_commit"),
+                        "started_at": provenance.get("started_at"),
                     }
                 )
     return pd.DataFrame(rows)

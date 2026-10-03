@@ -12,6 +12,9 @@ node_modules/
 .vercel
 .env*
 
+# Full-provenance evidence records (commit and timestamps change every run)
+data/evidence/
+
 # Python analysis
 .venv/
 __pycache__/
