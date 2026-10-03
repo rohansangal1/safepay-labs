@@ -31,3 +31,17 @@ export function signedDelivery(event: PaymentEvent, secret: string, timestamp = 
   const body = JSON.stringify(event);
   return { body, signature: sign(body, secret, timestamp) };
 }
+
+/**
+ * The provider's own record of captured payments, which a merchant can query server-to-server.
+ * Lets the lab model a webhook that was dropped: the money moved, but no event arrived.
+ */
+export function createLedger() {
+  const captured = new Map<string, { status: string; amount: number; currency: string }>();
+  return {
+    capture(payment: PaymentRef) {
+      captured.set(payment.id, { status: 'succeeded', amount: payment.amount, currency: payment.currency });
+    },
+    lookup: (paymentId: string) => captured.get(paymentId) ?? null,
+  };
+}

@@ -19,6 +19,10 @@ const target: Record<Defect, string> = {
   fulfillOnAnyStatus: 'fulfillment',
   skipOwnership: 'authorization',
   noIdempotency: 'idempotency',
+  ignoreRefunds: 'lifecycle',
+  lastEventWins: 'lifecycle',
+  dropFailedJobs: 'recovery',
+  noReconciliation: 'recovery',
 };
 
 const failed = (r: Awaited<ReturnType<typeof assess>>) =>
@@ -32,7 +36,9 @@ test('baseline checkout passes every assessed control', async () => {
   const r = await assess([]);
   assert.deepEqual(failed(r), []);
   assert.equal(r.score.criticalFailures.length, 0);
-  assert.equal(r.score.gate, 'insufficient-evidence');
+  // Eight of twelve controls have checks: 80 of 100 points, exactly the coverage threshold.
+  assert.equal(r.score.coverage, 80);
+  assert.equal(r.score.gate, 'assessed');
 });
 
 for (const [defect, control] of Object.entries(target)) {
@@ -121,7 +127,7 @@ test('assess: every outcome is a valid evidence record, reproducible without pro
   const { validateEvidence } = await import('@pias/checks');
   const records = async () => Object.values((await assess([])).results).flatMap(c => c.records);
   const first = await records();
-  assert.equal(first.length, 19);
+  assert.equal(first.length, 24);
   for (const r of first) {
     assert.deepEqual(validateEvidence(r), [], r.record_id);
     assert.equal(r.provenance, null);
@@ -139,5 +145,67 @@ test('assess: with provenance, records carry the commit, lock hash and timestamp
   for (const record of Object.values(r.results).flatMap(c => c.records)) {
     assert.deepEqual(validateEvidence(record, { requireProvenance: true }), [], record.record_id);
     assert.equal(record.provenance?.source_commit, provenance.source_commit);
+  }
+});
+
+test('a refund reverses fulfillment, is final, and survives a replayed success', async () => {
+  const lab = await serve({});
+  try {
+    const order = await lab.order();
+    const payment = await lab.pay(order.id);
+    await lab.deliver(paymentEvent(payment));
+    assert.equal(lab.checkout.activeFulfillments(order.id), 1);
+
+    assert.deepEqual(await lab.deliver(paymentEvent(payment, 'payment.refunded')), { received: true, refunded: order.id });
+    assert.equal(lab.checkout.activeFulfillments(order.id), 0);
+    assert.equal(lab.checkout.fulfillments(order.id), 1, 'the fulfillment record is kept, marked revoked');
+
+    assert.deepEqual(await lab.deliver(paymentEvent(payment)), { received: true, ignored: 'payment refunded' });
+    assert.equal(lab.checkout.activeFulfillments(order.id), 0);
+  } finally {
+    await lab.close();
+  }
+});
+
+test('a refund that arrives while fulfillment is queued cancels the job', async () => {
+  let down = true;
+  const lab = await serve({ onFulfill: () => { if (down) throw new Error('warehouse down'); } });
+  try {
+    const order = await lab.order();
+    const payment = await lab.pay(order.id);
+    await lab.deliver(paymentEvent(payment));
+    await lab.deliver(paymentEvent(payment, 'payment.refunded'));
+    down = false;
+    assert.deepEqual(lab.checkout.drainOutbox(), { done: 0, failed: 0 });
+    assert.equal(lab.checkout.fulfillments(order.id), 0);
+  } finally {
+    await lab.close();
+  }
+});
+
+test('reconcile recovers a dropped event once and refuses an underpaid capture', async () => {
+  const remote = new Map<string, { status: string; amount: number; currency: string }>();
+  const lab = await serve({ lookupPayment: id => remote.get(id) ?? null });
+  try {
+    const paid = await lab.order();
+    const paidPayment = await lab.pay(paid.id);
+    const short = await lab.order();
+    const shortPayment = await lab.pay(short.id);
+    const open = await lab.order();
+    await lab.pay(open.id);
+    remote.set(paidPayment.id, { status: 'succeeded', amount: paidPayment.amount, currency: paidPayment.currency });
+    remote.set(shortPayment.id, { status: 'succeeded', amount: 1, currency: shortPayment.currency });
+
+    assert.deepEqual(lab.checkout.reconcile(), { recovered: 1 });
+    assert.deepEqual(lab.checkout.reconcile(), { recovered: 0 });
+    assert.equal(lab.checkout.fulfillments(paid.id), 1);
+    assert.equal(lab.checkout.fulfillments(short.id), 0);
+    assert.equal(lab.checkout.fulfillments(open.id), 0);
+
+    // The webhook finally arrives: already handled.
+    assert.deepEqual(await lab.deliver(paymentEvent(paidPayment)), { received: true, duplicate: true });
+    assert.equal(lab.checkout.fulfillments(paid.id), 1);
+  } finally {
+    await lab.close();
   }
 });

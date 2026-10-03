@@ -21,7 +21,7 @@ export interface Check {
 }
 
 /** Bumped whenever a check is added, removed or re-versioned. */
-export const REGISTRY_VERSION = '1';
+export const REGISTRY_VERSION = '2';
 
 const event = (payment: PaymentRef, type: EventType = 'payment.succeeded', overrides: Partial<NeutralEvent> = {}): NeutralEvent => ({
   id: 'evt_' + crypto.randomUUID(),
@@ -48,6 +48,11 @@ async function pay(s: SubjectAdapter, orderId: string, customer = 'alice') {
 async function orderAndPay(s: SubjectAdapter) {
   const o = await order(s);
   return { order: o, payment: await pay(s, o.id) };
+}
+
+function faults(s: SubjectAdapter) {
+  if (!s.faults) throw new Error('subject offers no fault injection');
+  return s.faults;
 }
 
 const backend = { layer: 'backend-and-provider', oracle: 'fulfillment-records' } as const;
@@ -186,6 +191,56 @@ export const CHECKS: readonly Check[] = [
       const { order: o, payment } = await orderAndPay(s);
       const e = event(payment);
       await Promise.all(Array.from({ length: 5 }, () => s.deliver(e)));
+      return { expected: 1, observed: await s.fulfillments(o.id) };
+    } },
+
+  // lifecycle
+  { id: 'refund-revokes-fulfillment', version: 1, control: 'lifecycle', ...backend,
+    description: 'A refund after fulfillment leaves no fulfillment in force',
+    async run(s) {
+      const { order: o, payment } = await orderAndPay(s);
+      await s.deliver(event(payment));
+      await s.deliver(event(payment, 'payment.refunded'));
+      return { expected: 0, observed: await s.activeFulfillments(o.id) };
+    } },
+  { id: 'refund-before-success-not-fulfilled', version: 1, control: 'lifecycle', ...backend,
+    description: 'A success event that arrives after the refund does not fulfill',
+    async run(s) {
+      const { order: o, payment } = await orderAndPay(s);
+      await s.deliver(event(payment, 'payment.refunded'));
+      await s.deliver(event(payment));
+      return { expected: 0, observed: await s.activeFulfillments(o.id) };
+    } },
+  { id: 'late-failure-keeps-fulfillment', version: 1, control: 'lifecycle', ...backend,
+    description: 'A failure event that arrives after the success does not cancel a paid order',
+    async run(s) {
+      const { order: o, payment } = await orderAndPay(s);
+      await s.deliver(event(payment));
+      await s.deliver(event(payment, 'payment.failed'));
+      return { expected: 1, observed: await s.activeFulfillments(o.id) };
+    } },
+
+  // recovery
+  { id: 'worker-failure-recovers', version: 1, control: 'recovery', ...backend,
+    description: 'A paid order whose fulfillment failed is fulfilled exactly once after recovery',
+    async run(s) {
+      const f = faults(s);
+      const { order: o, payment } = await orderAndPay(s);
+      await f.breakFulfillment();
+      await s.deliver(event(payment));
+      await f.restoreFulfillment();
+      await f.recover();
+      await f.recover();
+      return { expected: 1, observed: await s.fulfillments(o.id) };
+    } },
+  { id: 'dropped-event-reconciled', version: 1, control: 'recovery', ...backend,
+    description: 'A captured payment whose event never arrived is fulfilled after reconciliation',
+    async run(s) {
+      const f = faults(s);
+      const { order: o, payment } = await orderAndPay(s);
+      await f.captureWithoutEvent(payment);
+      await f.recover();
+      await f.recover();
       return { expected: 1, observed: await s.fulfillments(o.id) };
     } },
 ];

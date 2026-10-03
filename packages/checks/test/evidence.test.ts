@@ -131,6 +131,7 @@ test('runner: stamps each record from the injected clock and redacts subject err
     products: { standard: { sku: 's', price: 2 }, cheap: { sku: 'c', price: 1 } },
     createOrder: unused, startPayment: unused, readOrder: unused, deliver: unused,
     fulfillments: async () => 0,
+    activeFulfillments: async () => 0,
     close: async () => {},
   };
   const checks: Check[] = [

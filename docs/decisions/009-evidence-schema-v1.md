@@ -1,6 +1,6 @@
 # 009. Evidence schema v1
 
-- **Status:** Proposed, 2026-10-03
+- **Status:** Accepted, 2026-10-03
 
 ## Context
 A control's evidence was a summary string such as `lab:owned-checkout:amount:3/3-checks-passed`, and the engine only checked that it was not empty. Nothing recorded which code was tested, with which versions, or when, and nothing stopped a sensitive value from being written into `data/runs/`. [METRIC.md](../METRIC.md#evidence-and-versioning) lists what an evidence item should carry.

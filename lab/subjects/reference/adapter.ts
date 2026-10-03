@@ -6,7 +6,7 @@ import type { AddressInfo } from 'node:net';
 import type { NeutralEvent, Reply, Signing, SubjectAdapter } from '@pias/checks';
 import { createCheckout, CATALOG } from './app.ts';
 import { sign } from '../../emulator/signature.ts';
-import { PROVIDER, type PaymentEvent } from '../../emulator/provider.ts';
+import { PROVIDER, createLedger, type PaymentEvent } from '../../emulator/provider.ts';
 
 export const SUBJECT_ID = 'lab:owned-checkout';
 
@@ -18,7 +18,14 @@ const toProvider = (e: NeutralEvent): PaymentEvent => ({
 
 export async function openReference(defects: string[] = []): Promise<SubjectAdapter> {
   const secret = crypto.randomBytes(32).toString('hex');
-  const checkout = createCheckout({ secret, defects });
+  const ledger = createLedger();
+  let workerDown = false;
+  const checkout = createCheckout({
+    secret,
+    defects,
+    lookupPayment: ledger.lookup,
+    onFulfill: () => { if (workerDown) throw new Error('fulfillment worker down'); },
+  });
   const server = http.createServer(checkout.handle);
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -62,6 +69,17 @@ export async function openReference(defects: string[] = []): Promise<SubjectAdap
     },
 
     fulfillments: async orderId => checkout.fulfillments(orderId),
+    activeFulfillments: async orderId => checkout.activeFulfillments(orderId),
+
+    faults: {
+      breakFulfillment: async () => { workerDown = true; },
+      restoreFulfillment: async () => { workerDown = false; },
+      captureWithoutEvent: async payment => { ledger.capture(payment); },
+      recover: async () => {
+        checkout.drainOutbox();
+        checkout.reconcile();
+      },
+    },
 
     close: () => new Promise<void>(resolve => {
       server.closeAllConnections();

@@ -28,7 +28,8 @@ export interface Reply<T = unknown> {
   body: T;
 }
 
-export type EventType = 'payment.succeeded' | 'payment.failed' | 'payment.processing';
+/** 'payment.refunded' is a full refund of the payment's amount. */
+export type EventType = 'payment.succeeded' | 'payment.failed' | 'payment.processing' | 'payment.refunded';
 
 /** A provider-neutral payment event. The adapter renders it in the provider's format. */
 export interface NeutralEvent {
@@ -74,6 +75,22 @@ export interface SubjectAdapter {
    * never from HTTP responses. Counts fulfillments for one order, or all when omitted.
    */
   fulfillments(orderId?: string): Promise<number>;
+  /** Fulfillments for one order that are still in force: not reversed by a refund or cancellation. */
+  activeFulfillments(orderId: string): Promise<number>;
+
+  /**
+   * Fault injection and recovery, for subjects the harness can control that far. Checks that
+   * need it are unknown, never pass, on a subject that doesn't offer it.
+   */
+  readonly faults?: {
+    /** Makes the fulfillment side effect fail (a crashed worker or downstream outage) until restored. */
+    breakFulfillment(): Promise<void>;
+    restoreFulfillment(): Promise<void>;
+    /** Captures the payment at the provider without delivering any event (a dropped webhook). */
+    captureWithoutEvent(payment: PaymentRef): Promise<void>;
+    /** Runs whatever the subject does to recover: worker retries, reconciliation jobs. */
+    recover(): Promise<void>;
+  };
 
   close(): Promise<void>;
 }

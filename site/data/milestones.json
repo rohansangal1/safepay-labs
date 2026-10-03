@@ -5,7 +5,7 @@
   { "id": 4, "title": "Reference checkout", "detail": "Local checkout on node:sqlite with a transactional fulfillment outbox, fake provider, 19 checks, 7 seeded defects; retry and restart recovery tested.", "phase": "1 Measurement core", "status": "done" },
   { "id": 5, "title": "SubjectAdapter and check registry", "detail": "Checks work against any subject; each check versioned with control, layer and oracle.", "phase": "1 Measurement core", "status": "done" },
   { "id": 6, "title": "Evidence records", "detail": "Evidence schema v1 with commit, versions, timestamps and redaction policy.", "phase": "1 Measurement core", "status": "done" },
-  { "id": 7, "title": "Checks for remaining controls", "detail": "Lifecycle, recovery, secrets, data minimization, browser integrity, audit.", "phase": "1 Measurement core", "status": "not-started" },
+  { "id": 7, "title": "Checks for remaining controls", "detail": "Lifecycle and recovery done (24 checks, 11 seeded defects). Still to do: secrets, data minimization, browser integrity, audit.", "phase": "1 Measurement core", "status": "in-progress" },
   { "id": 8, "title": "Harm oracle", "detail": "Underpayment, double fulfillment, cross-account, lost order, inconsistent refund. Never feeds the score.", "phase": "1 Measurement core", "status": "not-started" },
   { "id": 9, "title": "Mutation-based defects", "detail": "Automatically mutated variants replace hand-seeded ones for measuring detection.", "phase": "1 Measurement core", "status": "not-started" },
   { "id": 10, "title": "Metric v1 decisions", "detail": "Idempotency criticality, observation-layer profiles, profile-first reporting.", "phase": "1 Measurement core", "status": "not-started" },
