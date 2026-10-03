@@ -14,7 +14,7 @@ import {
 const root = path.join(import.meta.dirname, '..');
 const LIBRARY = path.join(root, 'data', 'library.json');
 const QUERIES = path.join(root, 'data', 'library-queries.json');
-const USER_AGENT = 'payment-integration-lab library updater (research; https://github.com/rohansangal1/payment-integration-lab)';
+const USER_AGENT = 'SafePay Labs library updater (research; https://github.com/rohansangal1/payment-integration-lab)';
 const ARXIV_DELAY_MS = 3100; // arXiv asks for one request every three seconds
 const S2_MAX_CITATIONS = 1000;
 

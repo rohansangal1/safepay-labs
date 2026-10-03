@@ -5,6 +5,10 @@ so work can continue without re-deriving context. It is committed, so it travels
 The working plan lives in [docs/PLAN.md](docs/PLAN.md); the roadmap is [site/data/milestones.json](site/data/milestones.json).
 
 ## What this project is
+The project's name is **SafePay Labs**, in the UI and in the docs. Only machine identifiers keep the old
+name: the GitHub repo and Vercel project (`payment-integration-lab`), the npm and Python package names,
+and the `pil_session` cookie.
+
 Research on **payment-integration security**. It measures whether payment integrations resist
 forged, replayed, reordered and mismatched provider events, using:
 - **PIAS** — an evidence-aware assurance score (`packages/core`), with a `[lower, upper]` range,
@@ -58,7 +62,9 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
 - `public/` — public landing page (static; idea and mission; cream and black theme, Instrument Serif headings over Inter). No results and
   no roadmap. Fonts and icons are vendored (illustrations are canvas line art in `public/scenes.js`) with sources in `public/assets/SOURCES.md`; the
   CSP in `vercel.json` blocks inline styles/scripts and every other origin.
-- `site/` — researcher portal (built from `packages/core` + `data/`). **Not public**: served only
+- `site/` — researcher portal (built from `packages/core` + `data/`), in the landing page's theme
+  without its motion; the sign-in page (`portal/signin.html`) and admin page (`portal/admin.py`) share
+  it and load fonts from the public `/assets/`. **Not public**: served only
   through `api/portal.py` at `/devs/`, after sign-in (form + 90-day session cookie) ([ADR 008](docs/decisions/008-public-landing-and-researcher-portal.md)).
 - `portal/` + `api/portal.py` — Python access layer (FastAPI, argon2-cffi, psycopg; root
   `pyproject.toml`/`uv.lock`): the gate, the admin page (`/devs/admin`), the researcher and session store (Neon Postgres) and the

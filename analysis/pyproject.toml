@@ -1,7 +1,7 @@
 [project]
 name = "piaslab-analysis"
 version = "0.1.0"
-description = "Analysis for the Payment Integration Lab: reads data/runs, computes prevalence intervals."
+description = "Analysis for SafePay Labs: reads data/runs, computes prevalence intervals."
 requires-python = "==3.12.*"
 dependencies = [
     "matplotlib>=3.9,<4",

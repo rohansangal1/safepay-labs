@@ -1,7 +1,7 @@
 [project]
 name = "pil-portal"
 version = "0.1.0"
-description = "Researcher portal access layer for the Payment Integration Lab (portal/, api/)."
+description = "Researcher portal access layer for SafePay Labs (portal/, api/)."
 requires-python = "==3.12.*"
 dependencies = [
     "argon2-cffi>=23.1,<26",

@@ -22,18 +22,34 @@ AUDIT_LABELS = {
     "revoke": "removed admin from",
 }
 
+# The landing page's mark, drawn still; styled by site/style.css.
+_BRAND = (
+    '<svg class="logo" viewBox="0 0 32 32" aria-hidden="true">'
+    '<rect width="32" height="32" rx="9" class="logo-tile"/>'
+    '<g transform="rotate(-28 16 16)">'
+    '<ellipse cx="16" cy="16" rx="12" ry="6.2" class="logo-ring back"/></g>'
+    '<circle cx="16" cy="16" r="4.6" class="logo-core"/>'
+    '<g transform="rotate(-28 16 16)"><path d="M28 16A12 6.2 0 0 1 4 16" class="logo-ring"/>'
+    '<circle cx="28" cy="16" r="1.8" class="logo-dot"/></g></svg>'
+    '<span class="brand-name">Safe<em>Pay</em> Labs</span>'
+)
+
 _STYLE = """
   .admin main { max-width: 980px; }
   .admin form { margin: 0; }
+  .admin .signout { margin-left: auto; }
   .admin .row-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
   .admin button, .admin summary {
     font: inherit; font-size: 13px; color: var(--text); background: var(--surface);
-    border: 1px solid var(--border); border-radius: 7px; padding: 4px 10px; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 999px; padding: 5px 13px; cursor: pointer;
     list-style: none; white-space: nowrap;
   }
   .admin summary::-webkit-details-marker { display: none; }
   .admin button:hover, .admin summary:hover { background: var(--surface-2); }
-  .admin button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .admin button.primary {
+    background: var(--text); border-color: var(--text); color: var(--on-dark); padding: 8px 18px;
+  }
+  .admin button.primary:hover { background: var(--accent); border-color: var(--accent); }
   .admin button.danger, .admin summary.danger { color: var(--critical-ink); }
   .admin details[open] { display: grid; gap: 6px; }
   .admin details p { font-size: 13px; color: var(--text-2); max-width: 220px; }
@@ -41,7 +57,7 @@ _STYLE = """
   .admin label { display: grid; gap: 4px; font-size: 13px; font-weight: 550; }
   .admin input {
     font: inherit; color: var(--text); background: var(--bg);
-    border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; min-width: 220px;
+    border: 1px solid var(--border); border-radius: 12px; padding: 7px 12px; min-width: 220px;
   }
   .admin .tag {
     display: inline-block; font-size: 12px; font-weight: 550; border-radius: 999px;
@@ -49,10 +65,13 @@ _STYLE = """
   }
   .admin .tag.admin-tag { background: var(--accent-soft); color: var(--accent); }
   .admin .tag.off { color: var(--critical-ink); }
-  .admin .notice { border-radius: 8px; padding: 10px 14px; border: 1px solid var(--border); }
+  .admin .notice {
+    border-radius: 12px; background: var(--surface); padding: 10px 14px;
+    border: 1px solid var(--border);
+  }
   .admin .notice.bad { color: var(--critical-ink); }
   .admin .secret {
-    display: block; margin: 8px 0; font: 16px ui-monospace, SFMono-Regular, Menlo, monospace;
+    display: block; margin: 8px 0; font: 16px var(--mono);
     background: var(--surface-2); padding: 8px 12px; border-radius: 8px; user-select: all;
   }
   .admin .log { margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--text-2); }
@@ -72,14 +91,16 @@ def _page(title: str, body: str) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>{escape(title)} · Payment Integration Lab</title>
+  <title>{escape(title)} · SafePay Labs</title>
+  <meta name="theme-color" content="#f3ede2">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="stylesheet" href="/devs/style.css">
   <style>{_STYLE}</style>
 </head>
 <body class="admin">
   <header class="topbar">
     <div class="topbar-inner">
-      <a class="brand" href="/devs/"><span class="logo">P</span>Payment Integration Lab</a>
+      <a class="brand" href="/devs/" aria-label="SafePay Labs, back to the portal">{_BRAND}</a>
       <nav aria-label="Sections"><a href="/devs/">← Back to the portal</a></nav>
       <form class="signout" method="post" action="/devs/logout">
         <button type="submit">Sign out</button>

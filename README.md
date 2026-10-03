@@ -1,4 +1,4 @@
-# Payment Integration Lab
+# SafePay Labs
 
 **Do AI coding agents build safe payment integrations?** This project measures it. Agent-built Stripe and Square integrations are attacked with forged, replayed and mismatched payment events. The damage is measured in money and order state, and each integration is scored with **PIAS**, an evidence-aware assurance score that keeps unchecked controls visible instead of counting them as passes.
 

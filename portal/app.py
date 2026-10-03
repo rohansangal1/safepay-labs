@@ -55,7 +55,8 @@ PORTAL_HEADERS = {
     # Not "no-referrer": that makes browsers send `Origin: null` on our own form posts, which the
     # same-origin check below would refuse. "same-origin" still tells other sites nothing.
     "Referrer-Policy": "same-origin",
-    # The portal renders chart bars with inline style attributes and has a data: favicon.
+    # The portal renders chart bars with inline style attributes. Fonts and the favicon are
+    # same-origin files under the public /assets/.
     "Content-Security-Policy": (
         "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
         "frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
