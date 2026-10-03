@@ -14,22 +14,22 @@ Search date: 27 September 2026. Scoped discovery review; bibliographic/abstract 
 8. **Vero et al., BaxBench: Can LLMs Generate Correct and Secure Backends? (2025 preprint).** Generated backends are checked with functional tests and then attacked with concrete exploits. This is the closest *method*: behavioral security testing of generated code. It covers generic backend vulnerabilities, not payment-specific multi-party state or money outcomes. [arXiv 2502.11844](https://arxiv.org/abs/2502.11844).
 9. **Endor Labs (2026), AI coding agent security benchmark.** Industry benchmark of security in agent-written code. Cited by Alipay-PIBench; not yet read in full. [Endor Labs](https://www.endorlabs.com/research/ai-code-security-benchmark).
 
-## Novelty matrix (27 Sep 2026)
+## Novelty matrix (3 Oct 2026)
 Based on the Alipay-PIBench full text (arXiv HTML, v4), the Stripe post and the BaxBench abstract. Recheck each entry against full texts and released artifacts before preregistration.
 
 | | Alipay-PIBench | Stripe benchmark | BaxBench | **This project** |
 |---|---|---|---|---|
-| Subjects | 6 agent models, 9 Alipay projects | Coding agents on Stripe tasks | LLMs, generic backends | Coding agents + 2–3 open-source shops |
+| Subjects | 6 agent models, 9 Alipay projects | Coding agents on Stripe tasks | LLMs, generic backends | **Owned architecture variants** + 2–3 open-source shops; agent work reviewed, not rerun |
 | Providers | Alipay only | Stripe only | None | **Stripe and Square** (cross-provider) |
-| Security asked for in the prompt? | Yes: separate "Advanced" hardening scenario | Not described | Varies | **Primary condition: no.** Realistic prompts that don't mention security, plus a paired condition that does |
+| Security asked for in the prompt? | Yes: separate "Advanced" hardening scenario | Not described | Varies | Not applicable: subjects are built to a declared design, with layers switched on and off |
 | How security is judged | Rubric pass rate; static, unit, integration and E2E checks, plus LLM-assisted judgment | Functional graders | Exploits against running apps | **Adversarial behavioral checks** with a sandbox-backed provider; no LLM judge |
 | Outcome measured | Rubric items passed | Task success | Exploit success | **Money and state harm** (ADR 002), separate from the score |
 | Missing evidence | Not modeled | Not modeled | Not modeled | **Explicit:** unknown ≠ pass; assurance range plus coverage |
 | Score validity tested? | No | No | No | **Yes:** does PIAS predict harm on held-out subjects? |
 
-**Defensible contribution.** Whether coding agents build payment integrations that resist forged, replayed, reordered and mismatched provider events when security isn't requested, across two providers. It is measured by money-level harm and paired with a validated evidence-aware score. Alipay-PIBench already shows that *asking* for hardening and providing a skill improve rubric scores. We should cite that and avoid claiming it.
+**Defensible contribution.** Which architectural choices and security layers stop forged, replayed, reordered and mismatched provider events from causing money-level harm, across two providers, paired with a validated evidence-aware score ([ADR 007](decisions/007-rescope-architectures-and-testing-tool.md)). The agent benchmarks in this matrix are evidence we review and map onto those layers, not results we reproduce. Alipay-PIBench already shows that *asking* for hardening and providing a skill improve rubric scores. We should cite that and avoid claiming it. Because we write the variants ourselves, the claim is a controlled comparison, not a prevalence estimate.
 
-**Risks to novelty.** Stripe could publish security results from its benchmark. Alipay-PIBench could add cross-provider tasks. Move quickly, and position against both explicitly.
+**Risks to novelty.** Either benchmark could add an architecture ablation or cross-provider tasks. Position against both explicitly, and keep the harm oracle and the open-source shops as the parts they lack.
 
 ## Current implementation sources
 - [Stripe fulfillment](https://docs.stripe.com/payments/checkout/fulfill-orders): use authoritative payment completion and handle repeat fulfillment safely.

@@ -18,12 +18,18 @@ forged, replayed, reordered and mismatched provider events, using:
 - an owned **reference checkout** (`lab/`) on `node:sqlite` with a transactional fulfillment outbox,
   plus seeded defects that calibrate the checks.
 
-### Research direction (proposed, pending ADR 007)
-The headline is shifting from "do AI coding agents build safe integrations" toward: **which
-architectures and security layers prevent money-level payment harm, and how to optimize a coding
-agent's design/scaffolding to reliably produce safe systems.** Primary subject = owned
-**architecture variants**; coding agents stay in scope as something to *optimize*. Do not rewrite
-the research docs for this until **ADR 007** is written and accepted.
+### Research direction ([ADR 007](docs/decisions/007-rescope-architectures-and-testing-tool.md), accepted 2026-10-03)
+The headline question: **which architectures and security layers prevent money-level payment
+harm.** Primary subject = owned **architecture variants**, plus open-source shops run locally.
+- **Coding agents:** evidence comes mostly from a literature review (`data/library.json`), not from
+  running a large agent benchmark; the output is integration guidance for developers and their agents.
+- **Isolation:** one sealed, disposable container per subject, driven from outside by the TypeScript
+  checks through `SubjectAdapter`. Python is for orchestration, analysis and later ML; the harness is
+  not rewritten in Python.
+- **Portal:** stores and shows runs. Runs start locally or in CI and send evidence records to it; the
+  hosted portal never launches attacks.
+- **After the research:** an open-source tool for end-to-end payment testing without real card data.
+- **ML:** wanted, undefined; build nothing for it until a concrete use is written down.
 
 ## Safety boundary (hard rule)
 Everything runs against **software we own or open-source software we run locally** with our own
@@ -79,6 +85,7 @@ npm ci
 npm test                 # engine, lab and script tests
 npm run typecheck
 npm run assess           # reference checkout → data/runs/lab-reference.json
+npm run evidence         # same run with commit and timestamps → data/evidence/*.jsonl (git-ignored)
 npm run build:site       # regenerate site/ from source + data
 npm run site             # build + serve landing (/) and portal (/devs/) at http://127.0.0.1:4173
 npm run researcher -- list   # terminal fallback for portal accounts; admins normally use /devs/admin (docs/PORTAL_ACCESS.md)
@@ -95,7 +102,7 @@ uv run python -m piaslab.library_report   # → analysis/reports/library/ (git-i
 ```
 
 ## Current state (update this as work lands)
-- **Phase 0 done and on `main`:** TS restructure, CI + CodeQL, reference checkout (sqlite + outbox),
+- **Phase 0 done and on `main`:** TS restructure, CI, reference checkout (sqlite + outbox),
   static site, daily library job.
 - **On `main`:** Python analysis env (loaders, cluster bootstrap), library exploratory analysis.
 - **On branch `feat/public-landing-researcher-portal`:** public landing page + researcher-only portal
@@ -104,8 +111,12 @@ uv run python -m piaslab.library_report   # → analysis/reports/library/ (git-i
 - **In flight:** arXiv abstract backfill (`feat/library-abstracts`); Phase 1 SubjectAdapter
   (`phase-1-subject-adapter`); a Dependabot pytest bump (widen the `pytest<9` pin in
   `analysis/pyproject.toml` to accept it).
-- **Next:** ADR 007 (re-scope) → then update research plan + site for the new direction; build the
-  check registry, evidence schema, architecture variants and harm oracle (Phase 1).
+- **On branch `feat/evidence-records`:** evidence schema v1 ([ADR 009](docs/decisions/009-evidence-schema-v1.md),
+  `packages/checks/src/evidence.ts`); ADR 007 accepted, with the research plan, roadmap and portal
+  headline rewritten for it; CodeQL workflow removed.
+- **Next (Phase 1):** checks for the remaining controls, harm oracle, mutation-based defects, metric
+  v1 decisions. Then emulators (Phase 2), then containers, architecture variants and run ingest into
+  the portal (Phase 3).
 
 ## Deployment
 On **Vercel** (project `payment-integration-lab`, Node 24): `public/` is the static output, and
