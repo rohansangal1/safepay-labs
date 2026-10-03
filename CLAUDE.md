@@ -55,8 +55,8 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
 - `scripts/` — `build-site.ts`, the daily library updater (`update-library.ts`, `library.ts`).
 - `analysis/` — Python (uv, 3.12): reads `data/runs/` and `data/library.json`; PIAS run loaders,
   cluster bootstrap, and library exploratory analysis. Reads only; never writes into `data/`.
-- `public/` — public landing page (static; idea and mission; dark navy/violet theme). No results and
-  no roadmap. Fonts, icons and photos are vendored with sources in `public/assets/SOURCES.md`; the
+- `public/` — public landing page (static; idea and mission; cream and black theme, Instrument Serif headings over Inter). No results and
+  no roadmap. Fonts and icons are vendored (illustrations are canvas line art in `public/scenes.js`) with sources in `public/assets/SOURCES.md`; the
   CSP in `vercel.json` blocks inline styles/scripts and every other origin.
 - `site/` — researcher portal (built from `packages/core` + `data/`). **Not public**: served only
   through `api/portal.py` at `/devs/`, after sign-in (form + 90-day session cookie) ([ADR 008](docs/decisions/008-public-landing-and-researcher-portal.md)).
