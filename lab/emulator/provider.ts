@@ -3,6 +3,9 @@
 import crypto from 'node:crypto';
 import { sign } from './signature.ts';
 
+/** Recorded on evidence. Bump apiVersion when the event shape or signature scheme changes. */
+export const PROVIDER = { name: 'lab-provider', apiVersion: '1' } as const;
+
 export interface PaymentRef {
   id: string;
   order: string;

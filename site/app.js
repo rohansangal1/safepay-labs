@@ -207,8 +207,10 @@ function showFixture(id) {
       <thead><tr><th>Control</th><th class="num">Weight</th><th>Outcome</th><th>Evidence</th></tr></thead>
       <tbody>${controls.map(c => {
         const r = f.results[c.id] || NOT_ASSESSED;
-        const checks = (r.checks || []).map(k =>
-          `<li class="${k.pass ? 'ok' : k.error ? '' : 'bad'}">${k.pass ? '✓' : k.error ? '?' : '✗'} ${esc(k.description)}${k.pass ? '' : k.error ? ` <span class="muted">(could not run: ${esc(k.error)})</span>` : ` <span class="muted">(expected ${esc(k.expected)}, observed ${esc(k.observed)})</span>`}</li>`).join('');
+        const checks = (r.records || []).map(k => {
+          const pass = k.status === 'pass';
+          return `<li class="${pass ? 'ok' : k.error ? '' : 'bad'}">${pass ? '✓' : k.error ? '?' : '✗'} ${esc(k.description)}${pass ? '' : k.error ? ` <span class="muted">(could not run: ${esc(k.error)})</span>` : ` <span class="muted">(expected ${esc(k.expected)}, observed ${esc(k.observed)})</span>`}</li>`;
+        }).join('');
         return `<tr><td>${esc(c.title)}${c.critical ? ' <em class="tag">critical</em>' : ''}</td><td class="num">${c.weight}</td><td><span class="outcome ${r.status}">${r.status}</span></td><td><code>${esc(r.evidence)}</code>${checks ? `<ul class="checks">${checks}</ul>` : ''}</td></tr>`;
       }).join('')}</tbody>
     </table></div>`;
@@ -226,7 +228,7 @@ function renderControls() {
   // The defect-free lab run shows which checks exist for each control today.
   const baseline = fixtures.find(f => f.source === 'lab' && !f.defects.length);
   $('control-list').innerHTML = controls.map(c => {
-    const checks = baseline?.results[c.id]?.checks || [];
+    const checks = baseline?.results[c.id]?.records || [];
     return `
     <div class="control">
       <div class="control-row">

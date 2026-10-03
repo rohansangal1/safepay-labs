@@ -16,6 +16,7 @@
     "test": "node --test \"packages/**/*.test.ts\" \"lab/**/*.test.ts\" \"scripts/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.json",
     "assess": "node lab/subjects/reference/assess.ts",
+    "evidence": "node lab/subjects/reference/assess.ts --evidence",
     "build:site": "node scripts/build-site.ts",
     "library:update": "node scripts/update-library.ts",
     "library:abstracts": "node scripts/update-library.ts --backfill-only",

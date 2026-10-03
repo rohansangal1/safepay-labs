@@ -24,10 +24,54 @@ def test_load_runs_from_synthetic(synthetic_run):
 def test_load_checks_from_synthetic(synthetic_run):
     df = load_checks(synthetic_run)
     assert set(df.columns) == {
-        "run_id", "control", "control_status", "check_id",
-        "description", "expected", "observed", "passed",
+        "run_id", "control", "control_status", "record_id", "check_id", "check_version",
+        "layer", "oracle", "description", "status", "expected", "observed", "error", "passed",
+        "source_commit", "started_at",
     }
     assert df["passed"].tolist() == [True, False]
+    assert df["status"].tolist() == ["pass", "fail"]
+    assert df["source_commit"].isna().all()
+
+
+def test_errored_record_is_unknown_and_not_passed(synthetic_run):
+    doc = copy.deepcopy(synthetic_run)
+    record = doc["runs"][0]["results"]["amount"]["records"][0]
+    record.update(status="unknown", expected=None, observed=None, error="subject crashed")
+    df = load_checks(doc)
+    assert df.loc[0, "status"] == "unknown"
+    assert not df.loc[0, "passed"]
+
+
+def test_provenance_is_read_when_present(synthetic_run):
+    doc = copy.deepcopy(synthetic_run)
+    doc["runs"][0]["results"]["amount"]["records"][0]["provenance"] = {
+        "source_commit": "a" * 40,
+        "started_at": "2026-10-03T10:00:00.000Z",
+    }
+    df = load_checks(doc)
+    assert df.loc[0, "source_commit"] == "a" * 40
+    assert df.loc[0, "started_at"] == "2026-10-03T10:00:00.000Z"
+
+
+def test_unsupported_evidence_schema_version_is_rejected(synthetic_run):
+    bad = copy.deepcopy(synthetic_run)
+    bad["evidence_schema_version"] = "2.0"
+    with pytest.raises(LabRunSchemaError, match="evidence_schema_version"):
+        load_lab_run(bad)
+
+
+def test_record_missing_a_field_is_rejected(synthetic_run):
+    bad = copy.deepcopy(synthetic_run)
+    del bad["runs"][0]["results"]["amount"]["records"][0]["check_version"]
+    with pytest.raises(LabRunSchemaError, match="check_version"):
+        load_lab_run(bad)
+
+
+def test_result_without_records_is_rejected(synthetic_run):
+    bad = copy.deepcopy(synthetic_run)
+    del bad["runs"][0]["results"]["amount"]["records"]
+    with pytest.raises(LabRunSchemaError, match="records"):
+        load_lab_run(bad)
 
 
 def test_unsupported_metric_version_is_rejected(synthetic_run):
