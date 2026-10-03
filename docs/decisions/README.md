@@ -12,4 +12,4 @@ Short records of decisions that shape the project. Add a new numbered file when 
 | [006](006-public-site-and-publishing.md) | Public site and publishing rules | Accepted, amended by 008 |
 | [007](007-rescope-architectures-and-testing-tool.md) | Re-scope: architectures first, agent evidence from the literature, then a testing tool | Accepted |
 | [008](008-public-landing-and-researcher-portal.md) | Public landing page and researcher-only portal | Accepted |
-| [009](009-evidence-schema-v1.md) | Evidence schema v1 | Proposed |
+| [009](009-evidence-schema-v1.md) | Evidence schema v1 | Accepted |

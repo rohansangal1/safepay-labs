@@ -22,13 +22,19 @@ export const DEFECTS = {
   fulfillOnAnyStatus: 'Fulfills on any payment event, not only a success',
   skipOwnership: 'Lets any customer read or pay any order',
   noIdempotency: 'Processes duplicate events and fulfills an order more than once',
+  ignoreRefunds: 'Ignores refund events, so a refunded order stays fulfilled',
+  lastEventWins: 'Lets a late failure event cancel an order that was already paid and fulfilled',
+  dropFailedJobs: 'Gives up on a fulfillment job after its first failure',
+  noReconciliation: 'Never asks the provider about payments whose event was dropped',
 } as const;
 
 export type Defect = keyof typeof DEFECTS;
 
 interface Line { sku: string; qty: number; price: number }
-interface Order { id: string; customer: string; lines: Line[]; amount: number; currency: string; status: 'awaiting_payment' | 'paid' | 'fulfilled'; payment: string | null }
-interface Payment { id: string; order: string; amount: number; currency: string; status: 'requires_payment' | 'succeeded' | 'failed' }
+interface Order { id: string; customer: string; lines: Line[]; amount: number; currency: string; status: 'awaiting_payment' | 'paid' | 'fulfilled' | 'refunded'; payment: string | null }
+interface Payment { id: string; order: string; amount: number; currency: string; status: 'requires_payment' | 'succeeded' | 'failed' | 'refunded' }
+/** What the provider says about a payment when asked directly, as opposed to told by webhook. */
+export interface ProviderPayment { status: string; amount: number; currency: string }
 export interface OutboxJob { id: number; order: string; payment: string; event: string; attempts: number }
 type Reply = [status: number, body: unknown];
 
@@ -67,6 +73,8 @@ export interface CheckoutOptions {
   // Side effect of fulfilling an order (shipping, access grant). Runs from the outbox and may
   // throw: the job then stays pending and is retried on the next drain.
   onFulfill?: (job: OutboxJob) => void;
+  // Server-to-provider lookup used by reconcile() to recover payments whose event never arrived.
+  lookupPayment?: (paymentId: string) => ProviderPayment | null;
 }
 
 // Unique indexes that deduplicate by business action, not only by event ID. Seeding
@@ -85,14 +93,15 @@ const SCHEMA = `
     id INTEGER PRIMARY KEY, order_id TEXT NOT NULL, payment_id TEXT NOT NULL, event_id TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT);
   CREATE TABLE IF NOT EXISTS fulfillments (
-    id INTEGER PRIMARY KEY, order_id TEXT NOT NULL, payment_id TEXT NOT NULL, event_id TEXT NOT NULL);
+    id INTEGER PRIMARY KEY, order_id TEXT NOT NULL, payment_id TEXT NOT NULL, event_id TEXT NOT NULL,
+    revoked_at INTEGER);
 `;
 const DEDUPE = `
   CREATE UNIQUE INDEX IF NOT EXISTS outbox_one_per_order ON outbox(order_id);
   CREATE UNIQUE INDEX IF NOT EXISTS fulfillments_one_per_order ON fulfillments(order_id);
 `;
 
-export function createCheckout({ secret, defects = [], now = () => Math.floor(Date.now() / 1000), database = ':memory:', onFulfill }: CheckoutOptions) {
+export function createCheckout({ secret, defects = [], now = () => Math.floor(Date.now() / 1000), database = ':memory:', onFulfill, lookupPayment }: CheckoutOptions) {
   if (!secret) throw new Error('Webhook secret required');
   for (const d of defects) if (!(d in DEFECTS)) throw new Error('Unknown defect: ' + d);
   const has = (d: Defect) => defects.includes(d);
@@ -129,11 +138,15 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
     pending: db.prepare(`SELECT id, order_id AS "order", payment_id AS payment, event_id AS event, attempts
                          FROM outbox WHERE status = 'pending' ORDER BY id`),
     jobDone: db.prepare("UPDATE outbox SET status = 'done', attempts = attempts + 1, last_error = NULL WHERE id = ?"),
-    jobFailed: db.prepare('UPDATE outbox SET attempts = attempts + 1, last_error = ? WHERE id = ?'),
+    jobFailed: db.prepare('UPDATE outbox SET attempts = attempts + 1, last_error = ?, status = ? WHERE id = ?'),
+    cancelJobs: db.prepare("UPDATE outbox SET status = 'cancelled' WHERE order_id = ? AND status = 'pending'"),
+    revoke: db.prepare('UPDATE fulfillments SET revoked_at = ? WHERE order_id = ? AND revoked_at IS NULL'),
+    unpaid: db.prepare("SELECT id FROM orders WHERE status = 'awaiting_payment' AND payment IS NOT NULL ORDER BY id"),
     jobStatus: db.prepare('SELECT status FROM outbox WHERE event_id = ? ORDER BY id DESC LIMIT 1'),
     fulfill: db.prepare('INSERT OR IGNORE INTO fulfillments (order_id, payment_id, event_id) VALUES (?, ?, ?)'),
     countAll: db.prepare('SELECT count(*) AS n FROM fulfillments'),
     countOrder: db.prepare('SELECT count(*) AS n FROM fulfillments WHERE order_id = ?'),
+    countActive: db.prepare('SELECT count(*) AS n FROM fulfillments WHERE order_id = ? AND revoked_at IS NULL'),
   };
 
   const nextId = (prefix: string) => `${prefix}_${String((sql.nextId.get() as { value: number }).value).padStart(4, '0')}`;
@@ -202,15 +215,38 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
       return [200, { received: true, ignored: 'amount mismatch' }];
     }
 
-    const succeeded = event.type === 'payment.succeeded' || has('fulfillOnAnyStatus');
+    // Lifecycle: a refund is final. It reverses the fulfillment and blocks a success that arrives late.
+    if (event.type === 'payment.refunded' && !has('ignoreRefunds')) {
+      sql.paymentStatus.run('refunded', payment.id);
+      sql.cancelJobs.run(order.id);
+      sql.revoke.run(now(), order.id);
+      sql.orderStatus.run('refunded', order.id);
+      return [200, { received: true, refunded: order.id }];
+    }
+
+    const succeeded = event.type === 'payment.succeeded' || (has('fulfillOnAnyStatus') && event.type !== 'payment.refunded');
     if (!succeeded) {
-      if (event.type === 'payment.failed') sql.paymentStatus.run('failed', payment.id);
+      if (event.type === 'payment.failed') {
+        // A failure only settles a payment that is still open; events can arrive out of order.
+        if (payment.status === 'requires_payment') sql.paymentStatus.run('failed', payment.id);
+        else if (has('lastEventWins') && payment.status === 'succeeded') {
+          sql.paymentStatus.run('failed', payment.id);
+          sql.cancelJobs.run(order.id);
+          sql.revoke.run(now(), order.id);
+          sql.orderStatus.run('awaiting_payment', order.id);
+        }
+      }
       return [200, { received: true, ignored: 'not a success event' }];
     }
+    if (payment.status === 'refunded') return [200, { received: true, ignored: 'payment refunded' }];
+    return markPaid(order, payment, event.id);
+  }
+
+  function markPaid(order: Order, payment: Payment, eventId: string): Reply {
     sql.paymentStatus.run('succeeded', payment.id);
     if (!has('noIdempotency') && order.status !== 'awaiting_payment') return [200, { received: true, duplicate: true }];
     sql.orderStatus.run('paid', order.id);
-    sql.enqueue.run(order.id, payment.id, event.id);
+    sql.enqueue.run(order.id, payment.id, eventId);
     return [200, { received: true, queued: order.id }];
   }
 
@@ -229,11 +265,32 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
         });
         done++;
       } catch (err) {
-        sql.jobFailed.run(String((err as Error)?.message ?? err), job.id);
+        sql.jobFailed.run(String((err as Error)?.message ?? err), has('dropFailedJobs') ? 'failed' : 'pending', job.id);
         failed++;
       }
     }
     return { done, failed };
+  }
+
+  // Recovery for dropped events: asks the provider about every order still waiting on a payment
+  // and applies the same amount and currency match a webhook would get. Safe to run repeatedly.
+  function reconcile(): { recovered: number } {
+    if (!lookupPayment || has('noReconciliation')) return { recovered: 0 };
+    let recovered = 0;
+    for (const { id } of sql.unpaid.all() as { id: string }[]) {
+      recovered += transaction(() => {
+        const order = getOrder(id);
+        const payment = order && getPayment(order.payment);
+        if (!order || !payment || order.status !== 'awaiting_payment') return 0;
+        const remote = lookupPayment(payment.id);
+        if (!remote || remote.status !== 'succeeded') return 0;
+        if (remote.amount !== order.amount || remote.currency !== order.currency) return 0;
+        markPaid(order, payment, `reconcile:${payment.id}`);
+        return 1;
+      });
+    }
+    drainOutbox();
+    return { recovered };
   }
 
   function handleWebhook(rawBody: string, signature: unknown): Reply {
@@ -252,6 +309,8 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
 
   const fulfillments = (orderId?: string) =>
     ((orderId === undefined ? sql.countAll.get() : sql.countOrder.get(orderId)) as { n: number }).n;
+  // Fulfillments still in force: not reversed by a refund.
+  const activeFulfillments = (orderId: string) => (sql.countActive.get(orderId) as { n: number }).n;
 
   // Jobs left pending by a crash or failed side effect are picked up on start.
   drainOutbox();
@@ -287,5 +346,5 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
     }
   }
 
-  return { handle, drainOutbox, fulfillments, close: () => db.close() };
+  return { handle, drainOutbox, reconcile, fulfillments, activeFulfillments, close: () => db.close() };
 }

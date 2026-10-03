@@ -111,12 +111,15 @@ uv run python -m piaslab.library_report   # → analysis/reports/library/ (git-i
 - **In flight:** arXiv abstract backfill (`feat/library-abstracts`); Phase 1 SubjectAdapter
   (`phase-1-subject-adapter`); a Dependabot pytest bump (widen the `pytest<9` pin in
   `analysis/pyproject.toml` to accept it).
-- **On branch `feat/evidence-records`:** evidence schema v1 ([ADR 009](docs/decisions/009-evidence-schema-v1.md),
-  `packages/checks/src/evidence.ts`); ADR 007 accepted, with the research plan, roadmap and portal
+- **On `main`:** evidence schema v1 ([ADR 009](docs/decisions/009-evidence-schema-v1.md),
+  `packages/checks/src/evidence.ts`); ADR 007 accepted and the research plan, roadmap and portal
   headline rewritten for it; CodeQL workflow removed.
-- **Next (Phase 1):** checks for the remaining controls, harm oracle, mutation-based defects, metric
-  v1 decisions. Then emulators (Phase 2), then containers, architecture variants and run ingest into
-  the portal (Phase 3).
+- **On branch `feat/lifecycle-recovery-checks`:** lifecycle and recovery checks (24 checks across 8
+  controls, 11 seeded defects). The reference checkout handles full refunds and reconciles dropped
+  events; `SubjectAdapter` gained `activeFulfillments` and optional `faults`.
+- **Next (Phase 1):** checks for secrets, data minimization and audit (browser integrity waits for
+  the browser harness); harm oracle; mutation-based defects; metric v1 decisions. Then emulators
+  (Phase 2), then containers, architecture variants and run ingest into the portal (Phase 3).
 
 ## Deployment
 On **Vercel** (project `payment-integration-lab`, Node 24): `public/` is the static output, and

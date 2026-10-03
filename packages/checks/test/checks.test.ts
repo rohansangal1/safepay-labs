@@ -25,6 +25,7 @@ function stubSubject(log: string[]): SubjectAdapter {
     provider: { name: 'stub-provider', apiVersion: '9' },
     createOrder: unused, startPayment: unused, readOrder: unused, deliver: unused,
     fulfillments: async () => 0,
+    activeFulfillments: async () => 0,
     close: async () => { log.push('close'); },
   };
 }
