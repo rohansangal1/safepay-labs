@@ -1,46 +1,57 @@
-:root {
-  color-scheme: light;
-  --bg: #f6f6f4;
-  --surface: #fcfcfb;
-  --surface-2: #f0f0ed;
-  --border: #e3e2de;
-  --text: #0b0b0b;
-  --text-2: #52514e;
-  --muted: #7a7973;
-  --accent: #2a78d6;
-  --accent-soft: #e6f0fb;
-  --grid: #e9e8e4;
-  /* Status colors: always paired with a text label */
-  --good: #0ca30c;
-  --warning: #fab219;
-  --critical: #d03b3b;
-  --unknown: #b4b3ad;
-  --good-ink: #006300;
-  --warning-ink: #8a5a00;
-  --critical-ink: #a32020;
-  --radius: 10px;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+/* Researcher portal. Same cream, black and cobalt theme as the public landing page
+   (public/landing.css): serif display type over Inter, one accent. No motion here.
+   Fonts come from the public /assets/ folder, which is same-origin and needs no sign-in. */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/assets/fonts/inter-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/fonts/instrument-serif-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/fonts/instrument-serif-latin-400-italic.woff2") format("woff2");
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --bg: #121211;
-    --surface: #1a1a19;
-    --surface-2: #232321;
-    --border: #2e2e2b;
-    --text: #ffffff;
-    --text-2: #c3c2b7;
-    --muted: #8f8e86;
-    --accent: #3987e5;
-    --accent-soft: #1b2a3d;
-    --grid: #2a2a27;
-    --unknown: #5c5b56;
-    --good-ink: #5fd35f;
-    --warning-ink: #fac75a;
-    --critical-ink: #f07a7a;
-    --shadow: none;
-  }
+:root {
+  color-scheme: light;
+  --bg: #f3ede2;
+  --surface: #fbf8f2;
+  --surface-2: #ebe3d4;
+  --border: rgba(20, 18, 16, 0.12);
+  --text: #141210;
+  --text-2: #4b453d;
+  --muted: #756c61;
+  --on-dark: #f3ede2;
+  /* One accent: cobalt, as on the landing page. */
+  --accent: #2846f0;
+  --accent-on-dark: #8c9fff;
+  --accent-soft: rgba(40, 70, 240, 0.1);
+  --grid: rgba(20, 18, 16, 0.12);
+  /* Status colors carry data here, so they stay distinct hues: always paired with a text label */
+  --good: #2f9a5b;
+  --warning: #dc9a1c;
+  --critical: #c8452f;
+  --unknown: #b9b0a2;
+  --good-ink: #17663a;
+  --warning-ink: #80540a;
+  --critical-ink: #9c2c1f;
+  --serif: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --radius: 16px;
+  --shadow: 0 1px 2px rgba(20, 18, 16, 0.05), 0 12px 40px -18px rgba(20, 18, 16, 0.18);
 }
 
 * { box-sizing: border-box; }
@@ -50,14 +61,17 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  font: 15px/1.55 var(--sans);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
+::selection { background: var(--accent); color: #fff; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 
 a { color: var(--accent); text-decoration: none; }
-code { font: 0.86em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+code { font: 0.86em var(--mono); background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
 h1, h2 { margin: 0; letter-spacing: -0.01em; }
-h1 { font-size: 26px; font-weight: 650; }
+h1 { font: 400 clamp(36px, 4.4vw, 48px)/1.05 var(--serif); letter-spacing: -0.02em; text-wrap: balance; }
 h2 { font-size: 16px; font-weight: 600; }
 p { margin: 0; }
 .muted { color: var(--muted); }
@@ -68,40 +82,45 @@ p { margin: 0; }
   position: sticky;
   top: 0;
   z-index: 10;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  backdrop-filter: blur(8px);
+  background: rgba(251, 248, 242, 0.88);
+  backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);
   border-bottom: 1px solid var(--border);
 }
 .topbar-inner {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 6px 16px;
   display: flex;
   align-items: center;
-  gap: 24px;
-  min-height: 56px;
+  gap: 8px 24px;
+  min-height: 64px;
   flex-wrap: wrap;
 }
-.brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 650; white-space: nowrap; }
-.logo {
-  display: grid; place-items: center;
-  width: 26px; height: 26px; border-radius: 7px;
-  background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
-}
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); white-space: nowrap; }
+/* The landing page's mark, drawn still. */
+.logo { width: 28px; height: 28px; flex: none; }
+.logo-tile { fill: var(--text); }
+.logo-ring { fill: none; stroke: var(--on-dark); stroke-width: 1.6; stroke-linecap: round; }
+.logo-ring.back { opacity: 0.45; }
+.logo-core { fill: var(--on-dark); stroke: var(--text); stroke-width: 2; }
+.logo-dot { fill: var(--accent-on-dark); }
+.brand-name { font: 400 23px/1.2 var(--serif); letter-spacing: -0.01em; }
+.brand-name em { font-style: italic; color: var(--accent); }
 nav { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; max-width: 100%; }
 nav a {
   color: var(--text-2);
-  padding: 6px 10px;
-  border-radius: 7px;
+  padding: 7px 13px;
+  border-radius: 999px;
   font-size: 14px;
+  font-weight: 500;
   white-space: nowrap;
 }
 nav a:hover { background: var(--surface-2); color: var(--text); }
-nav a.active { background: var(--accent-soft); color: var(--accent); font-weight: 550; }
+nav a.active { background: var(--text); color: var(--on-dark); }
 .signout { margin-left: auto; }
 .signout button {
   font: inherit; font-size: 14px; color: var(--text-2); background: none;
-  border: 1px solid var(--border); border-radius: 7px; padding: 5px 10px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 999px; padding: 7px 16px; cursor: pointer;
 }
 .signout button:hover { background: var(--surface-2); color: var(--text); }
 
@@ -118,8 +137,8 @@ main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; }
   color: var(--text-2);
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
+  border-radius: 12px;
+  padding: 8px 14px;
   margin-bottom: 8px;
 }
 .banner.error { color: var(--critical-ink); }
@@ -158,8 +177,8 @@ main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; }
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 7px;
-  padding: 5px 12px;
+  border-radius: 999px;
+  padding: 7px 16px;
   cursor: pointer;
 }
 .button:hover { background: var(--surface-2); }
@@ -177,7 +196,7 @@ main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; }
   box-shadow: var(--shadow);
 }
 .stat span { font-size: 13px; color: var(--text-2); }
-.stat strong { font-size: 28px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stat strong { font: 400 40px/1.1 var(--serif); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .stat small { font-size: 12px; color: var(--muted); }
 
 /* ---------- Charts ---------- */
@@ -265,7 +284,7 @@ select {
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 10px;
   padding: 6px 8px;
   min-width: 140px;
 }
@@ -340,7 +359,7 @@ ul.checks .bad { color: var(--critical-ink); }
 
 .score-card { position: sticky; top: 76px; }
 .label { font-size: 12px; color: var(--muted); }
-.score-big { font-size: 44px; font-weight: 650; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.score-big { font: 400 60px/1.05 var(--serif); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .score-track { display: flex; gap: 2px; height: 10px; border-radius: 999px; overflow: hidden; }
 .score-track span { transition: width 0.15s; }
 .score-track .pass { background: var(--good); }
@@ -356,7 +375,7 @@ dt { color: var(--text-2); }
 dt small { display: block; font-size: 12px; color: var(--muted); }
 dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
 .formula {
-  font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  font: 12px/1.6 var(--mono);
   color: var(--text-2);
   background: var(--surface-2);
   border-radius: 7px;

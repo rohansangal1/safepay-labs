@@ -23,7 +23,7 @@ const playIntro = () => {
   const word = document.createElement('div');
   word.className = 'intro-word';
   let i = 0;
-  for (const [text, italic] of [['Safe', false], ['Pay', true]]) {
+  for (const [text, italic] of [['Safe', false], ['Pay', true], [' Labs', false]]) {
     for (const ch of text) {
       const s = document.createElement('span');
       s.textContent = ch;

@@ -1,6 +1,6 @@
 # Analysis
 
-Python analysis for the Payment Integration Lab. It **reads** the JSON that the Node lab writes
+Python analysis for SafePay Labs. It **reads** the JSON that the Node lab writes
 to `../data/runs/` and never writes back into it: data flows one way (Node → `data/runs` → Python).
 
 ## Setup

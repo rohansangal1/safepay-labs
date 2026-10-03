@@ -1,4 +1,4 @@
-"""Analysis for the Payment Integration Lab.
+"""Analysis for SafePay Labs.
 
 Reads the lab-run JSON in ``data/runs`` and computes prevalence statistics. This package never
 writes into ``data/runs``; it only reads what the Node lab produces.
