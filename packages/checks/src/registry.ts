@@ -2,12 +2,15 @@
 // it observes and the oracle that decides it. Bump a check's version whenever its behavior
 // changes, so results from different versions are never compared as if they were the same.
 import crypto from 'node:crypto';
-import type { EventType, NeutralEvent, PaymentRef, SubjectAdapter } from './adapter.ts';
+import type { AuditAction, EventType, NeutralEvent, PaymentRef, SubjectAdapter } from './adapter.ts';
 
 /** Where the check looks. Kept separate so browser-only profiles never mix with full evidence. */
 export type Layer = 'http-api' | 'backend-and-provider';
-/** What decides the outcome: the subject's fulfillment records or its HTTP responses. */
-export type Oracle = 'fulfillment-records' | 'http-response';
+/**
+ * What decides the outcome: the subject's fulfillment records, its HTTP responses, what it
+ * retains (logs and stored rows) or its audit trail.
+ */
+export type Oracle = 'fulfillment-records' | 'http-response' | 'retained-artifacts' | 'audit-trail';
 
 export interface Check {
   id: string;
@@ -21,7 +24,7 @@ export interface Check {
 }
 
 /** Bumped whenever a check is added, removed or re-versioned. */
-export const REGISTRY_VERSION = '2';
+export const REGISTRY_VERSION = '3';
 
 const event = (payment: PaymentRef, type: EventType = 'payment.succeeded', overrides: Partial<NeutralEvent> = {}): NeutralEvent => ({
   id: 'evt_' + crypto.randomUUID(),
@@ -55,8 +58,31 @@ function faults(s: SubjectAdapter) {
   return s.faults;
 }
 
+function artifacts(s: SubjectAdapter) {
+  if (!s.artifacts) throw new Error('subject offers no artifact access');
+  return s.artifacts;
+}
+
+// Synthetic billing details sent as a canary: a well-known sandbox test number and a reserved
+// domain. A subject that retains either has kept data it never needed.
+const CANARY = { email: 'canary.buyer@example.test', cardNumber: '4242424242424242' } as const;
+
+const containing = (texts: string[], needles: string[]) =>
+  texts.filter(t => needles.some(n => n && t.includes(n))).length;
+
+/** A full payment lifecycle carrying the canary, plus the requests most likely to leak: rejected ones. */
+async function exercise(s: SubjectAdapter) {
+  const { payment } = await orderAndPay(s);
+  await s.deliver(event(payment, 'payment.succeeded', { billing: CANARY }), 'unsigned');
+  await s.deliver(event(payment, 'payment.succeeded', { billing: CANARY }), 'tampered');
+  await s.deliver(event(payment, 'payment.succeeded', { billing: CANARY }));
+  await s.deliver(event(payment, 'payment.refunded', { billing: CANARY }));
+}
+
 const backend = { layer: 'backend-and-provider', oracle: 'fulfillment-records' } as const;
 const api = { layer: 'http-api', oracle: 'http-response' } as const;
+const retained = { layer: 'backend-and-provider', oracle: 'retained-artifacts' } as const;
+const audited = { layer: 'backend-and-provider', oracle: 'audit-trail' } as const;
 
 export const CHECKS: readonly Check[] = [
   // amount
@@ -242,5 +268,64 @@ export const CHECKS: readonly Check[] = [
       await f.recover();
       await f.recover();
       return { expected: 1, observed: await s.fulfillments(o.id) };
+    } },
+
+  // secrets
+  { id: 'secret-not-in-responses', version: 1, control: 'secrets', ...api,
+    description: 'No HTTP response contains a secret, including responses to rejected webhooks',
+    async run(s) {
+      const a = artifacts(s);
+      await exercise(s);
+      return { expected: 0, observed: containing(await a.responses(), await a.secrets()) };
+    } },
+  { id: 'secret-not-in-logs', version: 1, control: 'secrets', ...retained,
+    description: 'No log line contains a secret, including lines written for rejected webhooks',
+    async run(s) {
+      const a = artifacts(s);
+      await exercise(s);
+      return { expected: 0, observed: containing(await a.logs(), await a.secrets()) };
+    } },
+
+  // data
+  { id: 'card-number-not-retained', version: 1, control: 'data', ...retained,
+    description: 'A card number sent in an event is in no log line and no stored row',
+    async run(s) {
+      const a = artifacts(s);
+      await exercise(s);
+      return { expected: 0, observed: containing([...await a.logs(), ...await a.stored()], [CANARY.cardNumber]) };
+    } },
+  { id: 'email-not-in-logs', version: 1, control: 'data', ...retained,
+    description: 'A customer email sent in an event is in no log line',
+    async run(s) {
+      const a = artifacts(s);
+      await exercise(s);
+      return { expected: 0, observed: containing(await a.logs(), [CANARY.email]) };
+    } },
+
+  // operations
+  { id: 'state-changes-audited', version: 1, control: 'operations', ...audited,
+    description: 'Payment, fulfillment and refund of an order each leave an audit entry',
+    async run(s) {
+      const a = artifacts(s);
+      const { order: o, payment } = await orderAndPay(s);
+      await s.deliver(event(payment));
+      await s.deliver(event(payment, 'payment.refunded'));
+      const seen = new Set((await a.audit()).filter(e => e.order === o.id).map(e => e.action));
+      // Only changes the subject made are owed an entry: a subject that ignores refunds fails lifecycle, not audit.
+      const wanted: AuditAction[] = ['paid', 'fulfilled'];
+      if ((await s.activeFulfillments(o.id)) === 0) wanted.push('refunded');
+      return { expected: wanted.length, observed: wanted.filter(w => seen.has(w)).length };
+    } },
+  { id: 'rejected-event-audited', version: 1, control: 'operations', ...audited,
+    description: 'A forged event leaves an audit entry, so an attack can be noticed afterwards',
+    async run(s) {
+      const a = artifacts(s);
+      const { payment } = await orderAndPay(s);
+      const rejected = async () => (await a.audit()).filter(e => e.action === 'event-rejected').length;
+      const before = await rejected();
+      const reply = await s.deliver(event(payment), 'unsigned');
+      // A subject that accepts the forgery fails authenticity; there is no rejection to audit.
+      if (reply.status < 400) throw new Error('subject did not reject the forged event');
+      return { expected: 1, observed: (await rejected()) - before };
     } },
 ];

@@ -10,7 +10,7 @@ Status: research in progress, targeting a preprint. PIAS v0.1 is a draft metric,
 | `packages/core/` | PIAS score engine and control catalog | None (runtime) |
 | `packages/checks/` | Versioned check registry, `SubjectAdapter` interface and runner | None (runtime) |
 | `lab/emulator/` | Fake payment provider: event builder and HMAC webhook signing | None so far |
-| `lab/subjects/reference/` | Local reference checkout, its adapter, 11 seeded defects | None so far |
+| `lab/subjects/reference/` | Local reference checkout, its adapter, 17 seeded defects | None so far |
 | `data/runs/` | Assessment results (generated) | |
 | `public/` | Public landing page (static) | |
 | `site/` | Researcher portal (sign-in required) | |
@@ -69,9 +69,9 @@ There are two halves ([ADR 008](docs/decisions/008-public-landing-and-researcher
 ## Reference checkout
 `lab/subjects/reference/` is a small local checkout with a catalog, orders, payments and fulfillment records. It binds to 127.0.0.1 only and makes no outbound calls. There's no real provider, money or card data. It calibrates the checks: a known-good subject plus variants with one safeguard removed.
 
-State lives in `node:sqlite`. A verified success event records the payment and a fulfillment job in one transaction; the job then runs from that outbox. If fulfillment fails or the process stops, the job stays pending and runs on the next event or restart. Unique indexes allow one fulfillment per order, however many events arrive. A full refund reverses the fulfillment and blocks a success event that arrives late, and `reconcile()` asks the provider about orders whose event never arrived.
+State lives in `node:sqlite`. A verified success event records the payment and a fulfillment job in one transaction; the job then runs from that outbox. If fulfillment fails or the process stops, the job stays pending and runs on the next event or restart. Unique indexes allow one fulfillment per order, however many events arrive. A full refund reverses the fulfillment and blocks a success event that arrives late, and `reconcile()` asks the provider about orders whose event never arrived. Every payment and order state change, and every rejected webhook, writes a row to an append-only `audit` table in the same transaction. Log lines carry IDs and outcomes only, never a payload or the webhook secret.
 
-`npm run assess` runs the 24 registered checks in `packages/checks` through the checkout's `SubjectAdapter` ([adapter.ts](lab/subjects/reference/adapter.ts)). They map to eight PIAS controls (amount, binding, authenticity, fulfillment, authorization, idempotency, lifecycle, recovery). Each check is versioned and records its observation layer and oracle; the webhook checks read the checkout's fulfillment records, not its HTTP responses. A check that can't run leaves its control unknown, never passed. The baseline passes all eight and is rated *assessed* with a range of 80–100; the other four controls have no checks yet and stay unknown. Each of the eleven seeded defects (`DEFECTS` in `app.ts`) is caught by its own control and no other, and the tests enforce this.
+`npm run assess` runs the 30 registered checks in `packages/checks` through the checkout's `SubjectAdapter` ([adapter.ts](lab/subjects/reference/adapter.ts)). They map to eleven PIAS controls (amount, binding, authenticity, fulfillment, authorization, idempotency, lifecycle, recovery, secrets, data minimization, audit). Each check is versioned and records its observation layer and oracle; the webhook checks read the checkout's fulfillment records, not its HTTP responses. The secrets, data and audit checks read what the checkout leaves behind (responses, log lines, stored rows, audit trail) and cover that runtime evidence only. A check that can't run leaves its control unknown, never passed. The baseline passes all eleven and is rated *assessed* with a range of 95–100; browser integrity has no checks yet and stays unknown. Each of the seventeen seeded defects (`DEFECTS` in `app.ts`) is caught by its own control and no other, and the tests enforce this.
 
 To explore by hand:
 ```sh

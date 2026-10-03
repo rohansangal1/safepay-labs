@@ -1,6 +1,7 @@
 // Runs the registered PIAS checks against the owned reference checkout and its seeded defects.
 // The checks live in packages/checks; this file only picks the subject and writes the results.
-// The oracle is the checkout's own fulfillment records, not the HTTP responses.
+// The oracle is the checkout's own records (fulfillments, logs, stored rows, audit trail), not
+// its HTTP responses, except where a check is about the responses themselves.
 //
 //   node assess.ts             committed fixture (data/runs), reproducible: no commit or timestamps
 //   node assess.ts --evidence  full-provenance evidence records (data/evidence, git-ignored)

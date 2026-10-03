@@ -12,7 +12,7 @@ test('registry: IDs are unique, versions positive, controls in the catalog', () 
     assert.ok(catalog.has(c.control), `${c.id}: unknown control ${c.control}`);
     assert.ok(c.description, c.id);
     assert.ok(['http-api', 'backend-and-provider'].includes(c.layer), c.id);
-    assert.ok(['fulfillment-records', 'http-response'].includes(c.oracle), c.id);
+    assert.ok(['fulfillment-records', 'http-response', 'retained-artifacts', 'audit-trail'].includes(c.oracle), c.id);
   }
 });
 
@@ -29,6 +29,16 @@ function stubSubject(log: string[]): SubjectAdapter {
     close: async () => { log.push('close'); },
   };
 }
+
+test('checks that read artifacts are unknown, never pass, on a subject that offers none', async () => {
+  const reading = CHECKS.filter(c => ['secrets', 'data', 'operations'].includes(c.control));
+  assert.equal(reading.length, 6);
+  const results = await runChecks(reading, async () => stubSubject([]), { runId: 'R0', authorizationId: 'test' });
+  for (const control of ['secrets', 'data', 'operations']) {
+    assert.equal(results[control].status, 'unknown', control);
+    for (const r of results[control].records) assert.equal(r.error, 'subject offers no artifact access');
+  }
+});
 
 const stub = (id: string, control: string, run: Check['run']): Check =>
   ({ id, version: 1, control, layer: 'http-api', oracle: 'http-response', description: id, run });

@@ -39,6 +39,21 @@ export interface NeutralEvent {
   order: string;
   amount: number;
   currency: string;
+  /**
+   * Synthetic billing details the provider attaches to the event. The subject needs none of it
+   * to fulfill, so none of it should outlive the request. No real provider sends a full card
+   * number in an event; it is here as a canary for the data-minimization checks.
+   */
+  billing?: { email: string; cardNumber: string };
+}
+
+/** Provider-neutral names for what an audit trail records. The adapter maps the subject's own. */
+export type AuditAction = 'paid' | 'fulfilled' | 'refunded' | 'payment-failed' | 'event-rejected';
+
+export interface AuditEntry {
+  action: AuditAction;
+  /** Null when the subject could not tie the entry to an order, as for a forged event. */
+  order: string | null;
 }
 
 /**
@@ -90,6 +105,24 @@ export interface SubjectAdapter {
     captureWithoutEvent(payment: PaymentRef): Promise<void>;
     /** Runs whatever the subject does to recover: worker retries, reconciliation jobs. */
     recover(): Promise<void>;
+  };
+
+  /**
+   * What the subject leaves behind, for subjects whose internals the harness can read. Raw
+   * artifacts stay inside the check: a check reports a count, never the text it searched.
+   * Checks that need this are unknown, never pass, on a subject that doesn't offer it.
+   */
+  readonly artifacts?: {
+    /** Secret values the harness gave the subject (webhook signing secret, API keys), to search for. */
+    secrets(): Promise<string[]>;
+    /** Every HTTP response the subject has sent the harness so far: status, headers and body as text. */
+    responses(): Promise<string[]>;
+    /** Application log lines written so far. */
+    logs(): Promise<string[]>;
+    /** Every row the subject has stored, one serialized row per entry. */
+    stored(): Promise<string[]>;
+    /** The subject's audit trail, oldest first. Empty when it keeps none. */
+    audit(): Promise<AuditEntry[]>;
   };
 
   close(): Promise<void>;

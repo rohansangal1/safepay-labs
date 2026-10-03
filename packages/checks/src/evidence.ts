@@ -1,4 +1,4 @@
-// Evidence schema v1 (ADR 009). One record per check run: what was tested, by which version of
+// Evidence schema v1 (ADR 009; 1.1 adds two oracles, ADR 010). One record per check run: what was tested, by which version of
 // which check, what was expected and observed, and the provenance needed to reproduce it.
 // Records are the only form in which check results are stored, so redaction is applied here
 // and the validator refuses anything outside the allowlist.
@@ -7,7 +7,7 @@ import type { SubjectAdapter } from './adapter.ts';
 import { REGISTRY_VERSION, type Check, type Layer, type Oracle } from './registry.ts';
 
 /** Bumped whenever a field is added, removed or changes meaning. */
-export const EVIDENCE_SCHEMA_VERSION = '1.0';
+export const EVIDENCE_SCHEMA_VERSION = '1.1';
 /** Names the rules in this file: allowlisted fields, scalar values, scrubbed and capped text. */
 export const REDACTION_POLICY = 'allowlist-v1';
 
@@ -209,7 +209,7 @@ const SHA1 = /^[a-f0-9]{40}$/;
 const SHA256 = /^[a-f0-9]{64}$/;
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 const LAYERS: readonly string[] = ['http-api', 'backend-and-provider'] satisfies Layer[];
-const ORACLES: readonly string[] = ['fulfillment-records', 'http-response'] satisfies Oracle[];
+const ORACLES: readonly string[] = ['fulfillment-records', 'http-response', 'retained-artifacts', 'audit-trail'] satisfies Oracle[];
 
 const isScalar = (v: unknown): v is Scalar => v === null || ['number', 'boolean', 'string'].includes(typeof v);
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);

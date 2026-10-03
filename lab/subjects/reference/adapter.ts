@@ -13,14 +13,20 @@ export const SUBJECT_ID = 'lab:owned-checkout';
 const toProvider = (e: NeutralEvent): PaymentEvent => ({
   id: e.id,
   type: e.type,
-  data: { payment_id: e.payment, order_id: e.order, amount: e.amount, currency: e.currency },
+  data: {
+    payment_id: e.payment, order_id: e.order, amount: e.amount, currency: e.currency,
+    ...(e.billing ? { billing: { email: e.billing.email, card_number: e.billing.cardNumber } } : {}),
+  },
 });
 
 export async function openReference(defects: string[] = []): Promise<SubjectAdapter> {
   const secret = crypto.randomBytes(32).toString('hex');
   const ledger = createLedger();
   let workerDown = false;
+  const logs: string[] = [];
+  const responses: string[] = [];
   const checkout = createCheckout({
+    log: line => { logs.push(line); },
     secret,
     defects,
     lookupPayment: ledger.lookup,
@@ -36,7 +42,9 @@ export async function openReference(defects: string[] = []): Promise<SubjectAdap
       headers: { 'content-type': 'application/json', ...(customer ? { 'x-lab-customer': customer } : {}), ...headers },
       body,
     });
-    return { status: res.status, body: await res.json() };
+    const text = await res.text();
+    responses.push([`${res.status}`, ...[...res.headers].map(([k, v]) => `${k}: ${v}`), '', text].join('\n'));
+    return { status: res.status, body: JSON.parse(text) };
   }
 
   return {
@@ -79,6 +87,14 @@ export async function openReference(defects: string[] = []): Promise<SubjectAdap
         checkout.drainOutbox();
         checkout.reconcile();
       },
+    },
+
+    artifacts: {
+      secrets: async () => [secret],
+      responses: async () => [...responses],
+      logs: async () => [...logs],
+      stored: async () => checkout.dump(),
+      audit: async () => checkout.auditTrail().map(({ action, order }) => ({ action, order })),
     },
 
     close: () => new Promise<void>(resolve => {
