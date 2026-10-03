@@ -4,14 +4,13 @@ Remote: https://github.com/rohansangal1/payment-integration-lab. Keep it private
 
 ## Included
 - CI (`.github/workflows/ci.yml`) on Node 22 and 24: `npm ci`, type check, tests, and a generated-files check that fails if `data/runs` or the site's copies are stale.
-- CodeQL (`.github/workflows/codeql.yml`) on push, pull request and weekly.
 - Library update (`.github/workflows/library.yml`) daily and on demand: opens or updates a `library-updates` pull request.
 - All actions pinned to full commit SHAs with the release tag in a comment. Update them deliberately, e.g. with Dependabot for `github-actions`.
 - Issue templates (bug, research change) with a private route for security reports; PR template.
 
 ## Settings to turn on (manual, in GitHub → Settings)
 These are recommendations, not yet configured:
-1. **Branch protection on `main`:** require a pull request and passing *Research checks* and *CodeQL*; block force pushes.
+1. **Branch protection on `main`:** require a pull request and passing *Research checks*; block force pushes.
 2. **Private vulnerability reporting** (Security → Advisories). The issue template links to it, and the link doesn't work until this is enabled.
 3. **Secret scanning and push protection.**
 4. **Dependabot** alerts and version updates for `npm` and `github-actions`.
