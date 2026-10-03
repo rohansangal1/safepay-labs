@@ -1,0 +1,110 @@
+# CLAUDE.md — agent knowledge base
+
+Read this first. It orients any Claude Code session (new chat, another machine, or the cloud loop)
+so work can continue without re-deriving context. It is committed, so it travels with the repo.
+The working plan lives in [docs/PLAN.md](docs/PLAN.md); the roadmap is [site/data/milestones.json](site/data/milestones.json).
+
+## What this project is
+Research on **payment-integration security**. It measures whether payment integrations resist
+forged, replayed, reordered and mismatched provider events, using:
+- **PIAS** — an evidence-aware assurance score (`packages/core`), with a `[lower, upper]` range,
+  coverage, and a critical-control gate. Spec: [docs/METRIC.md](docs/METRIC.md).
+- a **harm oracle** that measures money/state outcomes (underpayment, double fulfillment,
+  cross-account, lost order, inconsistent refund), kept separate from the score ([ADR 002](docs/decisions/002-harm-oracle.md)).
+- an owned **reference checkout** (`lab/`) on `node:sqlite` with a transactional fulfillment outbox,
+  plus seeded defects that calibrate the checks.
+
+### Research direction (proposed, pending ADR 007)
+The headline is shifting from "do AI coding agents build safe integrations" toward: **which
+architectures and security layers prevent money-level payment harm, and how to optimize a coding
+agent's design/scaffolding to reliably produce safe systems.** Primary subject = owned
+**architecture variants**; coding agents stay in scope as something to *optimize*. Do not rewrite
+the research docs for this until **ADR 007** is written and accepted.
+
+## Safety boundary (hard rule)
+Everything runs against **software we own or open-source software we run locally** with our own
+sandbox keys. **Never** scan, probe, or test live systems we don't own or hold written
+authorization for. Findings in open-source software go through coordinated disclosure. The CLI/
+harness will enforce a scope gate (loopback or signed scope file only; refuses live-mode keys).
+Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
+
+## Working agreements (how agents should work here)
+- **Branch per change.** Before creating a branch, `git fetch origin` and base it on the
+  up-to-date remote (usually `origin/main`) — PRs are merged constantly, so local refs go stale.
+- **The human runs all commits, pushes and merges.** An interactive agent proposes the exact
+  `git add`/`commit`/`push` steps and a commit message; it does not commit. The cloud loop works on
+  its own branch and opens a PR — never pushes to `main`.
+- **Commit messages:** Conventional Commits with a scope tag — `feat(analysis): …`,
+  `fix(lab): …`, `feat(ui): …`, `docs(research): …`. Scopes: `ui` (site), `analysis` (Python),
+  `lab` (measurement core/harness), `research` (protocol/metric/data), `ci`, `infra`.
+- **`packages/` has zero runtime dependencies** (auditable engine/checks/CLI). `lab/` may add
+  pinned deps. See [ADR 003](docs/decisions/003-dependencies-and-layout.md).
+- **Generated files are committed and must be current:** `data/runs/*.json`, `site/score.js`,
+  `site/data/*`. Regenerate with `npm run assess && npm run build:site`; `npm run check:generated`
+  enforces it.
+- **Metric changes are versioned** and need an ADR + a metric-version bump ([CONTRIBUTING.md](CONTRIBUTING.md)).
+- **Every new check needs a failing case** on a subject lacking the control, and must pass on the reference.
+- **Never commit** real card data, live keys, raw HAR files or unredacted traces.
+- **Nothing from the portal goes in `public/`.** Research data and results stay under `site/`; the
+  landing page shows no roadmap or results at all. Researcher passwords and `DATABASE_URL` never
+  enter the repo.
+
+## Layout
+- `packages/core` — PIAS engine (TypeScript, zero deps), control catalog, tests.
+- `lab/` — reference checkout, fake provider/signature emulator, assessment harness, seeded defects.
+- `scripts/` — `build-site.ts`, the daily library updater (`update-library.ts`, `library.ts`).
+- `analysis/` — Python (uv, 3.12): reads `data/runs/` and `data/library.json`; PIAS run loaders,
+  cluster bootstrap, and library exploratory analysis. Reads only; never writes into `data/`.
+- `public/` — public landing page (static; idea and mission; dark navy/violet theme). No results and
+  no roadmap. Fonts, icons and photos are vendored with sources in `public/assets/SOURCES.md`; the
+  CSP in `vercel.json` blocks inline styles/scripts and every other origin.
+- `site/` — researcher portal (built from `packages/core` + `data/`). **Not public**: served only
+  through `api/portal.py` at `/devs/`, after sign-in (form + 90-day session cookie) ([ADR 008](docs/decisions/008-public-landing-and-researcher-portal.md)).
+- `portal/` + `api/portal.py` — Python access layer (FastAPI, argon2-cffi, psycopg; root
+  `pyproject.toml`/`uv.lock`): the gate, the admin page (`/devs/admin`), the researcher and session store (Neon Postgres) and the
+  account CLI. Account changes go through `portal/accounts.py` so page and CLI stay identical.
+- `data/` — `runs/` (assessment outputs), `library.json` (knowledge base), `library-queries.json`.
+- `docs/` — research plan, metric, safety, literature, dataset/tools, and `decisions/` (ADRs).
+
+## Commands
+```sh
+# Node (TypeScript, run directly via type stripping; Node 24, see .nvmrc)
+npm ci
+npm test                 # engine, lab and script tests
+npm run typecheck
+npm run assess           # reference checkout → data/runs/lab-reference.json
+npm run build:site       # regenerate site/ from source + data
+npm run site             # build + serve landing (/) and portal (/devs/) at http://127.0.0.1:4173
+npm run researcher -- list   # terminal fallback for portal accounts; admins normally use /devs/admin (docs/PORTAL_ACCESS.md)
+npm run test:portal      # ruff + pytest for portal/ and api/
+npm run library:update   # daily related-work search (also in CI)
+npm run library:abstracts # backfill arXiv abstracts into data/library.json
+
+# Python analysis (uv)
+cd analysis
+uv sync --locked
+uv run ruff check
+uv run pytest
+uv run python -m piaslab.library_report   # → analysis/reports/library/ (git-ignored)
+```
+
+## Current state (update this as work lands)
+- **Phase 0 done and on `main`:** TS restructure, CI + CodeQL, reference checkout (sqlite + outbox),
+  static site, daily library job.
+- **On `main`:** Python analysis env (loaders, cluster bootstrap), library exploratory analysis.
+- **On branch `feat/public-landing-researcher-portal`:** public landing page + researcher-only portal
+  (ADR 008). Before it works in production: accept Neon's marketplace terms and provision the
+  database, run `npm run researcher -- init`, and open production in Deployment Protection.
+- **In flight:** arXiv abstract backfill (`feat/library-abstracts`); Phase 1 SubjectAdapter
+  (`phase-1-subject-adapter`); a Dependabot pytest bump (widen the `pytest<9` pin in
+  `analysis/pyproject.toml` to accept it).
+- **Next:** ADR 007 (re-scope) → then update research plan + site for the new direction; build the
+  check registry, evidence schema, architecture variants and harm oracle (Phase 1).
+
+## Deployment
+On **Vercel** (project `payment-integration-lab`, Node 24): `public/` is the static output, and
+`/devs/*` is rewritten to the Python function `api/portal.py`, which reads researcher accounts
+from Neon Postgres (`DATABASE_URL`). Production must be reachable without Vercel login so the
+landing page is public; previews stay SSO-protected. Results stay private until public release per
+[ADR 006](docs/decisions/006-public-site-and-publishing.md).
+Connect the GitHub repo in the Vercel dashboard to get per-PR previews.

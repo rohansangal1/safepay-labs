@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment Integration Lab — Making payments safer for everyone</title>
+  <meta name="description" content="Independent research into what makes online checkouts resist forged, replayed, reordered and mismatched payment events, so apps deliver what was paid for and nothing else.">
+  <meta name="theme-color" content="#070a1a">
+  <meta property="og:title" content="Payment Integration Lab">
+  <meta property="og:description" content="Independent research into checkouts that can't be tricked by fake payment messages.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="landing.css">
+  <script type="module" src="landing.js"></script>
+</head>
+<body>
+  <a class="skip" href="#mission">Skip to content</a>
+
+  <header class="topbar" data-topbar>
+    <div class="topbar-inner">
+      <a class="brand" href="#top" aria-label="Payment Integration Lab, back to top">
+        <span class="logo" aria-hidden="true"></span>
+        <span class="brand-name">Payment Integration Lab</span>
+      </a>
+      <nav aria-label="Sections" data-nav>
+        <a href="#mission">Mission</a>
+        <a href="#problem">The problem</a>
+        <a href="#demo">Under the hood</a>
+        <a href="#approach">Our approach</a>
+        <a href="#safety">Safety</a>
+      </nav>
+      <a class="button small" href="#demo">See it work</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- ===================== Hero ===================== -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-bg" aria-hidden="true">
+        <div class="glow glow-a"></div>
+        <div class="glow glow-b"></div>
+        <div class="grid-lines"></div>
+      </div>
+
+      <div class="hero-copy">
+        <span class="chip reveal"><span class="dot"></span>Independent research · in progress</span>
+        <h1 id="hero-title" class="reveal">
+          Making payments safer<br>
+          for <span class="rotator" data-words="everyone,apps,customers,developers,the next checkout">everyone</span>.
+        </h1>
+        <p class="lede reveal">
+          Every in-app purchase ends with one short message from a payment company to the app:
+          <em>this order was paid</em>. We study what makes a checkout trust that message only
+          when it should, so the right order is delivered, once, to the person who paid.
+        </p>
+        <div class="actions reveal">
+          <a class="button primary" href="#demo">See what happens when you press Pay<span class="icon arrow-right" aria-hidden="true"></span></a>
+          <a class="button ghost" href="#mission">Our mission</a>
+        </div>
+        <ul class="hero-facts reveal" aria-label="Project principles">
+          <li>Tests run only on software we own</li>
+          <li>No real money, cards or customers</li>
+          <li>Methods, tool and data to be published</li>
+        </ul>
+      </div>
+
+      <div class="hero-art reveal" aria-hidden="true">
+        <div class="art-frame">
+          <div class="art-title"><span class="live"></span>Incoming payment messages</div>
+          <div class="ev" data-verdict="ok">
+            <div class="ev-row"><span class="ev-type">payment.succeeded</span><span class="ev-id">evt_7f3a…</span></div>
+            <div class="ev-row"><span>Order #1042</span><span>$48.00</span></div>
+            <div class="ev-scan"></div>
+            <div class="ev-verdict"><span class="icon shield-check"></span>Signature verified · accepted</div>
+          </div>
+          <div class="ev" data-verdict="bad">
+            <div class="ev-row"><span class="ev-type">payment.succeeded</span><span class="ev-id">evt_7f3a…</span></div>
+            <div class="ev-row"><span>Order #1042</span><span>$48.00</span></div>
+            <div class="ev-scan"></div>
+            <div class="ev-verdict"><span class="icon repeat"></span>Already processed · ignored</div>
+          </div>
+          <div class="ev" data-verdict="bad">
+            <div class="ev-row"><span class="ev-type">payment.succeeded</span><span class="ev-id">evt_91c0…</span></div>
+            <div class="ev-row"><span>Order #1042</span><span class="strike">$0.48</span></div>
+            <div class="ev-scan"></div>
+            <div class="ev-verdict"><span class="icon scale"></span>Amount mismatch · rejected</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Mission ===================== -->
+    <section id="mission" class="section">
+      <div class="section-head reveal">
+        <span class="eyebrow">Our mission</span>
+        <h2>Apps should be able to trust a payment message exactly as much as it deserves.</h2>
+        <p>
+          Payment companies move the money. Apps deliver the order. In between sits a plain text
+          message that is easy to fake, repeat or alter. We exist to find out which designs make
+          that moment safe, to measure it honestly, and to give those answers away.
+        </p>
+      </div>
+
+      <div class="mission-grid">
+        <figure class="photo-card reveal">
+          <img src="assets/photos/phone-app.webp" width="1400" height="933" alt="A phone showing an app, resting beside a laptop keyboard." loading="lazy" decoding="async">
+          <figcaption>The money moves in a second. The app decides what to do next on the strength of one message.</figcaption>
+        </figure>
+
+        <ul class="pillars">
+          <li class="pillar reveal">
+            <span class="icon microscope"></span>
+            <h3>Measure, don't assume</h3>
+            <p>We attack real code and record what the money and the orders actually did. No checklists, no self-reporting.</p>
+          </li>
+          <li class="pillar reveal">
+            <span class="icon landmark"></span>
+            <h3>Count harm in money</h3>
+            <p>Underpaid orders, double deliveries, lost payments. We report outcomes a business would recognise, not abstract severity scores.</p>
+          </li>
+          <li class="pillar reveal">
+            <span class="icon book-open"></span>
+            <h3>Give the answers away</h3>
+            <p>The study plan is published before the main run. The paper, the data and a free tool for checking your own checkout follow.</p>
+          </li>
+          <li class="pillar reveal">
+            <span class="icon heart-handshake"></span>
+            <h3>Fix first, publish second</h3>
+            <p>If we find a weakness in someone else's open-source software, its maintainers hear about it privately before anyone else.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== Problem ===================== -->
+    <section id="problem" class="section">
+      <div class="section-head reveal">
+        <span class="eyebrow">The problem</span>
+        <h2>An app gets a message saying “payment received.” What if the message is fake?</h2>
+        <p>
+          When you pay inside an app, the app usually never sees your card. The payment company
+          takes the money, then sends the app a short message. The app delivers on the strength of
+          it. If the app doesn't check carefully, a made-up, repeated or altered message costs real money.
+        </p>
+      </div>
+
+      <div class="attacks">
+        <div class="attack reveal">
+          <span class="icon key-round"></span>
+          <h3>Forged</h3>
+          <p>A message the payment company never sent, dressed up to look real.</p>
+        </div>
+        <div class="attack reveal">
+          <span class="icon repeat"></span>
+          <h3>Replayed</h3>
+          <p>A genuine message, captured once and delivered again.</p>
+        </div>
+        <div class="attack reveal">
+          <span class="icon shuffle"></span>
+          <h3>Reordered</h3>
+          <p>Real messages arriving in the wrong order, so a refund lands before the payment.</p>
+        </div>
+        <div class="attack reveal">
+          <span class="icon layers"></span>
+          <h3>Mismatched</h3>
+          <p>The right message attached to the wrong order, amount or account.</p>
+        </div>
+      </div>
+
+      <div class="harm-band reveal">
+        <div class="harm-intro">
+          <h3>What it costs when a check is missing</h3>
+          <p>The five outcomes we measure. Each one is money or product leaving the business that shouldn't.</p>
+        </div>
+        <ul class="harms">
+          <li><span class="icon banknote-x"></span><b>Paid too little</b><span>An order is marked paid for less than it cost.</span></li>
+          <li><span class="icon package-plus"></span><b>Delivered twice</b><span>One payment is counted again and the order is fulfilled twice.</span></li>
+          <li><span class="icon package-x"></span><b>Order lost</b><span>The customer paid, but the app never finds out.</span></li>
+          <li><span class="icon users"></span><b>Wrong account</b><span>A payment is credited to somebody else's order.</span></li>
+          <li><span class="icon receipt"></span><b>Refund mismatch</b><span>Money is refunded but the order still counts as paid.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== Demo ===================== -->
+    <section id="demo" class="section">
+      <div class="section-head reveal">
+        <span class="eyebrow">Under the hood</span>
+        <h2>What happens in the second after you press <span class="hl">Pay now</span></h2>
+        <p>
+          A careful checkout runs a chain of checks before anything is delivered. Watch a genuine
+          payment pass every one, then watch a forged message get stopped at the door.
+        </p>
+      </div>
+
+      <div class="demo reveal" data-demo>
+        <div class="demo-stage">
+          <div class="checkout" data-checkout>
+            <div class="checkout-head"><span class="store-dot"></span>Northwind Coffee · Checkout</div>
+            <div class="line"><span>Pour-over kit</span><b>$48.00</b></div>
+            <div class="line"><span>Shipping</span><b>Free</b></div>
+            <div class="line total"><span>Total</span><b>$48.00</b></div>
+            <div class="cardrow"><span class="icon credit-card"></span><span>Visa •••• 4242</span><span class="exp">04/28</span></div>
+            <button class="paybtn" type="button" data-paybtn>
+              <span class="paybtn-label">Pay now</span>
+              <span class="paybtn-busy"><span></span><span></span><span></span></span>
+              <span class="paybtn-done">Paid</span>
+            </button>
+          </div>
+          <div class="cursor" data-cursor aria-hidden="true"></div>
+
+          <div class="forged" data-forged aria-hidden="true">
+            <div class="forged-head"><span class="icon siren"></span>Forged message</div>
+            <div class="ev-row"><span>payment.succeeded</span><span>Order #1042</span></div>
+            <div class="ev-row"><span>Signature</span><span class="strike">invalid</span></div>
+          </div>
+        </div>
+
+        <ol class="pipeline" data-pipeline>
+          <li data-step="press"><span class="icon mouse-pointer-click"></span><div><b>Customer presses Pay</b><small>The browser hands the card details straight to the payment company.</small></div></li>
+          <li data-step="charge"><span class="icon credit-card"></span><div><b>Payment company charges the card</b><small>The app never sees the card number.</small></div></li>
+          <li data-step="send"><span class="icon send"></span><div><b>A signed message is sent to the app</b><small>“Order #1042 was paid, $48.00.” Signed with a secret only the two share.</small></div></li>
+          <li data-step="verify" class="gate"><span class="icon fingerprint"></span><div><b>App checks the signature</b><small>Was this really sent by the payment company, and recently?</small></div><span class="verdict"></span></li>
+          <li data-step="match" class="gate"><span class="icon scale"></span><div><b>App matches amount and order</b><small>Is $48.00 what order #1042 actually costs?</small></div><span class="verdict"></span></li>
+          <li data-step="dedupe" class="gate"><span class="icon repeat"></span><div><b>App checks it hasn't seen this before</b><small>The same message delivered twice must count once.</small></div><span class="verdict"></span></li>
+          <li data-step="record"><span class="icon database"></span><div><b>Payment recorded in one transaction</b><small>Mark the order paid and queue the delivery together, or not at all.</small></div></li>
+          <li data-step="ship"><span class="icon package-check"></span><div><b>Order delivered, exactly once</b><small>The fulfilment job runs only after the record is safely stored.</small></div></li>
+        </ol>
+
+        <div class="demo-foot">
+          <p class="demo-status" data-status aria-live="polite">Hover over Pay now to begin.</p>
+          <button class="button ghost small" type="button" data-replay>Replay</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Approach ===================== -->
+    <section id="approach" class="section">
+      <div class="section-head reveal">
+        <span class="eyebrow">Our approach</span>
+        <h2>We build checkouts, attack them in our own lab, and measure what the money did.</h2>
+      </div>
+
+      <ol class="steps">
+        <li class="step reveal">
+          <span class="step-no">01</span>
+          <span class="icon flask-conical"></span>
+          <h3>Build a careful reference</h3>
+          <p>A checkout we wrote ourselves that handles every case correctly, plus copies with one deliberate mistake each. They prove our tests can tell safe from unsafe.</p>
+        </li>
+        <li class="step reveal">
+          <span class="step-no">02</span>
+          <span class="icon shield-check"></span>
+          <h3>Attack it locally</h3>
+          <p>Our harness plays the attacker: forged, replayed, reordered and mismatched messages, delivered to software running on our own machines.</p>
+        </li>
+        <li class="step reveal">
+          <span class="step-no">03</span>
+          <span class="icon scale"></span>
+          <h3>Measure the harm</h3>
+          <p>We record what went wrong in money and orders, and give each checkout an assurance score that keeps anything we couldn't test visible rather than assuming it passed.</p>
+        </li>
+      </ol>
+
+      <div class="split reveal">
+        <figure class="photo-card tall">
+          <img src="assets/photos/laptop-glow.webp" width="1400" height="933" alt="A laptop keyboard glowing in a dark room." loading="lazy" decoding="async">
+        </figure>
+        <div class="split-copy">
+          <h3>Where this is going</h3>
+          <p>
+            Beyond grading individual checkouts, we are mapping which <strong>architectures and
+            security layers</strong> stop money-level harm outright, and how to guide the tools
+            people increasingly build with, including AI coding assistants, toward producing
+            those designs by default.
+          </p>
+          <div class="providers">
+            <p>Message formats we plan to emulate locally</p>
+            <div class="provider-list">
+              <span class="provider"><span class="brand-mark stripe" role="img" aria-label="Stripe"></span>Stripe</span>
+              <span class="provider"><span class="brand-mark square" role="img" aria-label="Square"></span>Square</span>
+            </div>
+            <small>Stripe and Square are trademarks of their owners. This project is not affiliated with or endorsed by either company, and does not test their systems.</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== Who benefits ===================== -->
+    <section id="who" class="section">
+      <div class="section-head reveal">
+        <span class="eyebrow">Who this is for</span>
+        <h2>Safer payments help everyone on both sides of the checkout.</h2>
+      </div>
+      <div class="who-grid">
+        <figure class="photo-card wide reveal">
+          <img src="assets/photos/night-coding.webp" width="1400" height="1120" alt="A developer working at a monitor in a dark room." loading="lazy" decoding="async">
+        </figure>
+        <ul class="audience">
+          <li class="reveal"><span class="icon layers"></span><h3>Apps and businesses</h3><p>Most apps rely on a plugin, an SDK or a few hundred lines of glue code. We find out which of those designs quietly leak money.</p></li>
+          <li class="reveal"><span class="icon users"></span><h3>Customers</h3><p>Fewer lost orders, fewer “we never got your payment” emails, and less of your money stuck in dispute queues.</p></li>
+          <li class="reveal"><span class="icon git-branch"></span><h3>Developers</h3><p>A free checker for your own checkout and a clear list of the controls that matter most, in the order they matter.</p></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== Safety ===================== -->
+    <section id="safety" class="section">
+      <div class="section-head reveal">
+        <span class="eyebrow">How we keep it safe</span>
+        <h2>Research that never touches a real app or payment account.</h2>
+      </div>
+      <div class="cards three">
+        <article class="card reveal">
+          <span class="icon lock"></span>
+          <h3>Only our own software</h3>
+          <p>We test software we wrote or open-source software we run on our own machines. We never probe a live app or payment system we don't own.</p>
+        </article>
+        <article class="card reveal">
+          <span class="icon eye-off"></span>
+          <h3>No real money or card data</h3>
+          <p>Every order, payment and customer in the lab is made up. Nothing is charged and nothing is delivered.</p>
+        </article>
+        <article class="card reveal">
+          <span class="icon heart-handshake"></span>
+          <h3>Fix first, publish second</h3>
+          <p>Weaknesses in someone else's open-source software go to its maintainers privately before anything is published.</p>
+        </article>
+      </div>
+      <p class="note reveal">The assurance score is a research measure. It is not a PCI certification or a guarantee that a checkout is secure.</p>
+    </section>
+
+    <!-- ===================== About ===================== -->
+    <section id="about" class="section about reveal">
+      <div class="about-card">
+        <span class="eyebrow">About</span>
+        <h2>An independent research project, working in the open.</h2>
+        <p>
+          We are working toward a public paper, a free tool and a dataset. Detailed methods and
+          results will appear here once they have been reviewed for release. This site uses no
+          cookies, analytics or third-party services.
+        </p>
+        <div class="actions">
+          <a class="button primary" href="#top">Back to top</a>
+          <a class="button ghost" href="/devs/">Researcher sign-in</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <span>Payment Integration Lab · Research in progress</span>
+      <span class="credits">Photos by Ales Nesetril, Pawel Czerwinski, Philipp Katzenberger and Fernando Hernandez on Unsplash.</span>
+    </div>
+  </footer>
+</body>
+</html>

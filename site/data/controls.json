@@ -4,83 +4,107 @@
     "title": "Server-authoritative amount",
     "weight": 15,
     "critical": true,
-    "description": "Order amount, currency and discounts come from the server; mismatches cannot fulfill."
+    "description": "Order amount, currency and discounts come from the server; mismatches cannot fulfill.",
+    "risk": "A buyer edits the price or currency in the browser, or pays less than the total, and still receives the goods.",
+    "requires": "Server catalog/order and provider amount/currency match."
   },
   {
     "id": "binding",
     "title": "Order and merchant binding",
     "weight": 10,
     "critical": true,
-    "description": "Payment, merchant, customer and order identities agree before fulfillment."
+    "description": "Payment, merchant, customer and order identities agree before fulfillment.",
+    "risk": "A payment made for one order is used to fulfill a different one, such as paying for a cheap order to release an expensive one.",
+    "requires": "Cross-object identity checks plus a business-state oracle."
   },
   {
     "id": "authenticity",
     "title": "Webhook authenticity",
     "weight": 10,
     "critical": true,
-    "description": "Provider signature validation uses the original body and provider-specific verification."
+    "description": "Provider signature validation uses the original body and provider-specific verification.",
+    "risk": "Anyone who finds the webhook URL can forge a \"payment succeeded\" event and receive goods without paying.",
+    "requires": "Provider-specific verification plus negative sandbox cases."
   },
   {
     "id": "fulfillment",
     "title": "Verified fulfillment",
     "weight": 10,
     "critical": true,
-    "description": "Only a verified successful payment can authorize the matching business action."
+    "description": "Only a verified successful payment can authorize the matching business action.",
+    "risk": "Orders are fulfilled on failed, pending or unknown payments, so goods leave without money arriving.",
+    "requires": "Provider success correlated with committed fulfillment."
   },
   {
     "id": "authorization",
     "title": "Object authorization",
     "weight": 10,
     "critical": true,
-    "description": "Another account cannot read, capture, refund or fulfill the order."
+    "description": "Another account cannot read, capture, refund or fulfill the order.",
+    "risk": "One customer can read, pay for, refund or fulfill another customer's order.",
+    "requires": "Two owned synthetic identities and order-level isolation."
   },
   {
     "id": "idempotency",
     "title": "Idempotency and replay",
     "weight": 10,
     "critical": false,
-    "description": "Retries, duplicate events and concurrent delivery cannot duplicate economic effects."
+    "description": "Retries, duplicate events and concurrent delivery cannot duplicate economic effects.",
+    "risk": "A retried or duplicated event fulfills or refunds the same order more than once.",
+    "requires": "Repeated/concurrent delivery causes one economic effect."
   },
   {
     "id": "lifecycle",
     "title": "Payment lifecycle",
     "weight": 10,
     "critical": false,
-    "description": "Delayed, reordered, failed, refunded and disputed states reconcile correctly."
+    "description": "Delayed, reordered, failed, refunded and disputed states reconcile correctly.",
+    "risk": "Late, out-of-order, refunded or disputed events leave the order in the wrong state, such as still fulfilled after a refund.",
+    "requires": "Delayed/reordered/canceled/refunded state transitions."
   },
   {
     "id": "secrets",
     "title": "Secret isolation",
     "weight": 5,
     "critical": false,
-    "description": "Secret credentials remain server-side, isolated by environment and least privilege."
+    "description": "Secret credentials remain server-side, isolated by environment and least privilege.",
+    "risk": "A leaked secret key lets someone else act as the merchant: create charges, issue refunds or sign fake events.",
+    "requires": "Source/config review and redacted runtime evidence."
   },
   {
     "id": "data",
     "title": "Sensitive-data minimization",
     "weight": 5,
     "critical": false,
-    "description": "No real card data, credentials or personal identifiers in retained artifacts."
+    "description": "No real card data, credentials or personal identifiers in retained artifacts.",
+    "risk": "Card data, credentials or personal details end up in logs and traces, where a leak exposes them.",
+    "requires": "Artifact inspection and retention policy."
   },
   {
     "id": "browser",
     "title": "Payment-page integrity",
     "weight": 5,
     "critical": false,
-    "description": "Scripts and browser protections follow the applicable integration threat model."
+    "description": "Scripts and browser protections follow the applicable integration threat model.",
+    "risk": "A tampered or injected script on the payment page can skim card details or alter the payment.",
+    "requires": "Scripts, deployment policy and applicable provider guidance."
   },
   {
     "id": "recovery",
     "title": "Recovery and reconciliation",
     "weight": 5,
     "critical": false,
-    "description": "Dropped events and outages recover without silently losing payment/order consistency."
+    "description": "Dropped events and outages recover without silently losing payment/order consistency.",
+    "risk": "A dropped event or crashed worker leaves a paid order unfulfilled, and nobody notices.",
+    "requires": "Dropped event and worker-failure recovery traces."
   },
   {
     "id": "operations",
     "title": "Audit and maintenance",
     "weight": 5,
     "critical": false,
-    "description": "Versioned dependencies, redacted traces and alerting support incident response."
+    "description": "Versioned dependencies, redacted traces and alerting support incident response.",
+    "risk": "Without version history, an audit trail or alerts, an incident cannot be detected or reconstructed.",
+    "requires": "Version provenance, dependency review and audit events."
   }
 ]

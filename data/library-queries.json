@@ -1,0 +1,161 @@
+{
+  "_comment": "Each arXiv query casts a wide net; a find is kept only if its title or abstract matches at least one term from every list in 'must'. Citing papers of entries with track_citations are kept if they mention any citation_term.",
+  "arxiv": [
+    {
+      "name": "Payment code written by AI",
+      "query": "(abs:payment OR abs:payments OR abs:checkout OR abs:webhook OR abs:webhooks) AND (abs:\"coding agent\" OR abs:\"coding agents\" OR abs:\"code generation\" OR abs:\"generated code\" OR abs:\"LLM-generated\" OR abs:\"AI-generated\")",
+      "must": [
+        [
+          "payment",
+          "payments",
+          "checkout",
+          "webhook",
+          "webhooks",
+          "e-commerce",
+          "merchant",
+          "Stripe",
+          "PayPal",
+          "Alipay"
+        ],
+        [
+          "coding agent",
+          "coding agents",
+          "code generation",
+          "generated code",
+          "LLM-generated code",
+          "AI-generated code",
+          "code LLM",
+          "code LLMs",
+          "vibe coding"
+        ]
+      ]
+    },
+    {
+      "name": "Payment and e-commerce logic flaws",
+      "query": "(abs:payment OR abs:payments OR abs:\"e-commerce\" OR abs:merchant OR abs:checkout) AND (abs:\"logic vulnerability\" OR abs:\"logic vulnerabilities\" OR abs:\"logic flaw\" OR abs:\"logic flaws\" OR abs:\"business logic\") AND (abs:security OR abs:secure OR abs:attack OR abs:attacks OR abs:vulnerability OR abs:vulnerabilities)",
+      "must": [
+        [
+          "payment",
+          "payments",
+          "checkout",
+          "webhook",
+          "webhooks",
+          "e-commerce",
+          "merchant",
+          "Stripe",
+          "PayPal",
+          "Alipay",
+          "cashback",
+          "refund",
+          "refunds"
+        ],
+        [
+          "logic",
+          "security",
+          "secure",
+          "attack",
+          "attacks",
+          "vulnerability",
+          "vulnerabilities",
+          "vulnerable",
+          "exploit",
+          "CWE"
+        ]
+      ]
+    },
+    {
+      "name": "Webhook security",
+      "query": "(abs:webhook OR abs:webhooks) AND (abs:security OR abs:secure OR abs:attack OR abs:attacks OR abs:vulnerability OR abs:vulnerabilities)",
+      "must": [
+        [
+          "webhook",
+          "webhooks"
+        ],
+        [
+          "security",
+          "secure",
+          "attack",
+          "attacks",
+          "vulnerability",
+          "vulnerabilities",
+          "vulnerable",
+          "exploit",
+          "CWE",
+          "signature",
+          "replay",
+          "forged"
+        ]
+      ]
+    },
+    {
+      "name": "Agentic commerce security",
+      "query": "(abs:\"agentic commerce\" OR abs:\"agent payments\" OR abs:\"agentic payments\" OR abs:\"agent payment\") AND (abs:security OR abs:secure OR abs:attack OR abs:attacks OR abs:vulnerability OR abs:vulnerabilities)",
+      "must": [
+        [
+          "agentic commerce",
+          "agent payments",
+          "agentic payments",
+          "agent payment",
+          "payment protocol",
+          "AP2"
+        ],
+        [
+          "security",
+          "secure",
+          "attack",
+          "attacks",
+          "vulnerability",
+          "vulnerabilities",
+          "vulnerable",
+          "exploit",
+          "CWE",
+          "replay",
+          "forged",
+          "injection"
+        ]
+      ]
+    },
+    {
+      "name": "Security of AI-generated code",
+      "query": "(cat:cs.CR OR cat:cs.SE) AND (abs:\"generated code\" OR abs:\"secure code generation\" OR abs:\"code security\") AND abs:benchmark AND (abs:agent OR abs:agents OR abs:LLM OR abs:LLMs)",
+      "must": [
+        [
+          "security",
+          "secure",
+          "attack",
+          "attacks",
+          "vulnerability",
+          "vulnerabilities",
+          "vulnerable",
+          "exploit",
+          "CWE"
+        ],
+        [
+          "coding agent",
+          "coding agents",
+          "code generation",
+          "generated code",
+          "LLM-generated code",
+          "AI-generated code",
+          "code LLM",
+          "code LLMs",
+          "vibe coding"
+        ]
+      ]
+    }
+  ],
+  "per_query": 25,
+  "citation_terms": [
+    "payment",
+    "checkout",
+    "webhook",
+    "e-commerce",
+    "ecommerce",
+    "merchant",
+    "commerce",
+    "stripe",
+    "paypal",
+    "alipay",
+    "square"
+  ]
+}

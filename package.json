@@ -13,17 +13,21 @@
     "lab"
   ],
   "scripts": {
-    "test": "node --test \"packages/**/*.test.ts\" \"lab/**/*.test.ts\"",
+    "test": "node --test \"packages/**/*.test.ts\" \"lab/**/*.test.ts\" \"scripts/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.json",
     "assess": "node lab/subjects/reference/assess.ts",
     "build:site": "node scripts/build-site.ts",
-    "site": "npm run build:site && python3 -m http.server 4173 --bind 127.0.0.1 --directory site",
+    "library:update": "node scripts/update-library.ts",
+    "library:abstracts": "node scripts/update-library.ts --backfill-only",
+    "site": "npm run build:site && uv run python -m portal.dev",
+    "researcher": "uv run --env-file .env.local python -m portal.cli",
+    "test:portal": "uv run ruff check portal api && uv run pytest -q",
     "checkout": "node lab/subjects/reference/server.ts",
     "checkout:event": "node lab/subjects/reference/send-event.ts",
     "check:generated": "npm run assess && npm run build:site && git diff --exit-code -- data/runs site/score.js site/data"
   },
   "devDependencies": {
-    "@types/node": "22.20.4",
+    "@types/node": "26.6.2",
     "typescript": "7.0.2"
   }
 }
