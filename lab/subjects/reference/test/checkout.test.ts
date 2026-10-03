@@ -23,6 +23,23 @@ const target: Record<Defect, string> = {
   lastEventWins: 'lifecycle',
   dropFailedJobs: 'recovery',
   noReconciliation: 'recovery',
+  leakSecretInErrors: 'secrets',
+  logSecret: 'secrets',
+  logRawEvents: 'data',
+  storeRawEvents: 'data',
+  skipAudit: 'operations',
+  silentRejections: 'operations',
+};
+
+// The checks that read logs, responses, stored rows and the audit trail, and the seeded defect
+// that is each one's failing case.
+const failingCase: Record<string, Defect> = {
+  'secret-not-in-responses': 'leakSecretInErrors',
+  'secret-not-in-logs': 'logSecret',
+  'card-number-not-retained': 'storeRawEvents',
+  'email-not-in-logs': 'logRawEvents',
+  'state-changes-audited': 'skipAudit',
+  'rejected-event-audited': 'silentRejections',
 };
 
 const failed = (r: Awaited<ReturnType<typeof assess>>) =>
@@ -36,14 +53,23 @@ test('baseline checkout passes every assessed control', async () => {
   const r = await assess([]);
   assert.deepEqual(failed(r), []);
   assert.equal(r.score.criticalFailures.length, 0);
-  // Eight of twelve controls have checks: 80 of 100 points, exactly the coverage threshold.
-  assert.equal(r.score.coverage, 80);
+  // Eleven of twelve controls have checks: 95 of 100 points. Browser integrity waits for the browser harness.
+  assert.equal(r.score.coverage, 95);
   assert.equal(r.score.gate, 'assessed');
 });
 
 for (const [defect, control] of Object.entries(target)) {
   test(`seeded ${defect} is detected only by ${control}`, async () => {
     assert.deepEqual(failed(await assess([defect])), [control]);
+  });
+}
+
+for (const [check, defect] of Object.entries(failingCase)) {
+  test(`check ${check} passes on the baseline and fails on seeded ${defect}`, async () => {
+    const status = async (defects: string[]) =>
+      Object.values((await assess(defects)).results).flatMap(c => c.records).find(r => r.check_id === check)?.status;
+    assert.equal(await status([]), 'pass');
+    assert.equal(await status([defect]), 'fail');
   });
 }
 
@@ -72,6 +98,7 @@ async function serve(options: Omit<CheckoutOptions, 'secret'>) {
     (await fetch(base + route, { method: 'POST', headers: { 'x-lab-customer': 'alice', ...headers }, body })).json() as Promise<any>;
   return {
     checkout,
+    post,
     order: () => post('/orders', JSON.stringify({ items: [{ sku: 'lab-mug', qty: 1 }] })),
     pay: (orderId: string) => post(`/orders/${orderId}/payment`),
     deliver: (event: PaymentEvent) => {
@@ -127,7 +154,7 @@ test('assess: every outcome is a valid evidence record, reproducible without pro
   const { validateEvidence } = await import('@pias/checks');
   const records = async () => Object.values((await assess([])).results).flatMap(c => c.records);
   const first = await records();
-  assert.equal(first.length, 24);
+  assert.equal(first.length, 30);
   for (const r of first) {
     assert.deepEqual(validateEvidence(r), [], r.record_id);
     assert.equal(r.provenance, null);
@@ -178,6 +205,32 @@ test('a refund that arrives while fulfillment is queued cancels the job', async 
     down = false;
     assert.deepEqual(lab.checkout.drainOutbox(), { done: 0, failed: 0 });
     assert.equal(lab.checkout.fulfillments(order.id), 0);
+  } finally {
+    await lab.close();
+  }
+});
+
+test('the audit trail records each state change and rejection; logs and rows keep no payload', async () => {
+  const lines: string[] = [];
+  const lab = await serve({ log: line => { lines.push(line); } });
+  try {
+    const order = await lab.order();
+    const payment = await lab.pay(order.id);
+    const billing = { email: 'canary.buyer@example.test', card_number: '4242424242424242' };
+    const withBilling = (type: string): PaymentEvent => {
+      const e = paymentEvent(payment, type);
+      return { ...e, data: { ...e.data, billing } };
+    };
+    await lab.post('/webhooks/payments', JSON.stringify(withBilling('payment.succeeded')), { 'x-lab-signature': 't=1,v1=forged' });
+    await lab.deliver(withBilling('payment.succeeded'));
+    await lab.deliver(withBilling('payment.refunded'));
+
+    assert.deepEqual(lab.checkout.auditTrail().map(e => [e.action, e.order]), [
+      ['event-rejected', null], ['paid', order.id], ['fulfilled', order.id], ['refunded', order.id],
+    ]);
+    assert.ok(lines.some(l => l.startsWith('webhook.rejected')) && lines.some(l => l.startsWith('webhook.accepted')));
+    const kept = [...lines, ...lab.checkout.dump()].join('\n');
+    for (const sensitive of ['test-secret', billing.email, billing.card_number]) assert.ok(!kept.includes(sensitive), sensitive);
   } finally {
     await lab.close();
   }

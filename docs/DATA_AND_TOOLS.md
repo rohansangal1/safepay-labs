@@ -8,7 +8,7 @@ Each subject carries its source (variant, open-source or calibration), provider,
 Evidence record, schema v1 ([ADR 009](decisions/009-evidence-schema-v1.md), `packages/checks/src/evidence.ts`). One per check run:
 ```json
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "record_id": "LAB-0-20261003T225947Z/duplicate-delivery@1",
   "run_id": "LAB-0-20261003T225947Z",
   "subject_id": "lab:owned-checkout",

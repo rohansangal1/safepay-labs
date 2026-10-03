@@ -16,7 +16,11 @@ export interface PaymentRef {
 export interface PaymentEvent {
   id: string;
   type: string;
-  data: { payment_id: string; order_id: string; amount: number; currency: string };
+  data: {
+    payment_id: string; order_id: string; amount: number; currency: string;
+    /** Synthetic billing details. A merchant needs none of them to fulfill. */
+    billing?: { email: string; card_number: string };
+  };
 }
 
 export function paymentEvent(payment: PaymentRef, type = 'payment.succeeded', id = 'evt_' + crypto.randomUUID()): PaymentEvent {

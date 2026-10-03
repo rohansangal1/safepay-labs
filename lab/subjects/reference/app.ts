@@ -1,6 +1,7 @@
 // Owned reference checkout. Local only: no real provider, money, card data or outbound
 // network calls. Customers are synthetic identities sent in a header. State lives in node:sqlite;
-// fulfillment runs from a transactional outbox so a verified payment is never lost.
+// fulfillment runs from a transactional outbox so a verified payment is never lost, and every
+// state change is written to an audit table.
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
 import { verify } from '../../emulator/signature.ts';
@@ -26,6 +27,12 @@ export const DEFECTS = {
   lastEventWins: 'Lets a late failure event cancel an order that was already paid and fulfilled',
   dropFailedJobs: 'Gives up on a fulfillment job after its first failure',
   noReconciliation: 'Never asks the provider about payments whose event was dropped',
+  leakSecretInErrors: 'Returns debug details, including the webhook secret, when a signature fails',
+  logSecret: 'Logs the webhook secret when a signature fails',
+  logRawEvents: 'Logs the full webhook payload, billing details included',
+  storeRawEvents: 'Stores the full webhook payload, billing details included, with each processed event',
+  skipAudit: 'Changes payment and order state without writing audit entries',
+  silentRejections: 'Rejects forged webhooks without recording the attempt',
 } as const;
 
 export type Defect = keyof typeof DEFECTS;
@@ -36,6 +43,8 @@ interface Payment { id: string; order: string; amount: number; currency: string;
 /** What the provider says about a payment when asked directly, as opposed to told by webhook. */
 export interface ProviderPayment { status: string; amount: number; currency: string }
 export interface OutboxJob { id: number; order: string; payment: string; event: string; attempts: number }
+export type AuditAction = 'paid' | 'fulfilled' | 'refunded' | 'payment-failed' | 'event-rejected';
+export interface AuditEntry { action: AuditAction; at: number; order: string | null; payment: string | null; event: string | null }
 type Reply = [status: number, body: unknown];
 
 class HttpError extends Error {
@@ -75,6 +84,8 @@ export interface CheckoutOptions {
   onFulfill?: (job: OutboxJob) => void;
   // Server-to-provider lookup used by reconcile() to recover payments whose event never arrived.
   lookupPayment?: (paymentId: string) => ProviderPayment | null;
+  // Receives each application log line. Lines carry IDs and outcomes only: no payloads, no secrets.
+  log?: (line: string) => void;
 }
 
 // Unique indexes that deduplicate by business action, not only by event ID. Seeding
@@ -88,20 +99,25 @@ const SCHEMA = `
   CREATE TABLE IF NOT EXISTS payments (
     id TEXT PRIMARY KEY, order_id TEXT NOT NULL REFERENCES orders(id), amount INTEGER NOT NULL,
     currency TEXT NOT NULL, status TEXT NOT NULL);
-  CREATE TABLE IF NOT EXISTS processed_events (id TEXT PRIMARY KEY, received_at INTEGER NOT NULL);
+  -- payload stays NULL: the event ID is all deduplication needs (seeding storeRawEvents fills it).
+  CREATE TABLE IF NOT EXISTS processed_events (id TEXT PRIMARY KEY, received_at INTEGER NOT NULL, payload TEXT);
   CREATE TABLE IF NOT EXISTS outbox (
     id INTEGER PRIMARY KEY, order_id TEXT NOT NULL, payment_id TEXT NOT NULL, event_id TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT);
   CREATE TABLE IF NOT EXISTS fulfillments (
     id INTEGER PRIMARY KEY, order_id TEXT NOT NULL, payment_id TEXT NOT NULL, event_id TEXT NOT NULL,
     revoked_at INTEGER);
+  -- Append-only: one row per payment or order state change and per rejected webhook.
+  CREATE TABLE IF NOT EXISTS audit (
+    id INTEGER PRIMARY KEY, at INTEGER NOT NULL, action TEXT NOT NULL, order_id TEXT, payment_id TEXT,
+    event_id TEXT);
 `;
 const DEDUPE = `
   CREATE UNIQUE INDEX IF NOT EXISTS outbox_one_per_order ON outbox(order_id);
   CREATE UNIQUE INDEX IF NOT EXISTS fulfillments_one_per_order ON fulfillments(order_id);
 `;
 
-export function createCheckout({ secret, defects = [], now = () => Math.floor(Date.now() / 1000), database = ':memory:', onFulfill, lookupPayment }: CheckoutOptions) {
+export function createCheckout({ secret, defects = [], now = () => Math.floor(Date.now() / 1000), database = ':memory:', onFulfill, lookupPayment, log = () => {} }: CheckoutOptions) {
   if (!secret) throw new Error('Webhook secret required');
   for (const d of defects) if (!(d in DEFECTS)) throw new Error('Unknown defect: ' + d);
   const has = (d: Defect) => defects.includes(d);
@@ -133,7 +149,7 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
     insertPayment: db.prepare('INSERT INTO payments VALUES (?, ?, ?, ?, ?)'),
     paymentStatus: db.prepare('UPDATE payments SET status = ? WHERE id = ?'),
     seenEvent: db.prepare('SELECT 1 FROM processed_events WHERE id = ?'),
-    recordEvent: db.prepare('INSERT OR IGNORE INTO processed_events VALUES (?, ?)'),
+    recordEvent: db.prepare('INSERT OR IGNORE INTO processed_events VALUES (?, ?, ?)'),
     enqueue: db.prepare('INSERT INTO outbox (order_id, payment_id, event_id) VALUES (?, ?, ?)'),
     pending: db.prepare(`SELECT id, order_id AS "order", payment_id AS payment, event_id AS event, attempts
                          FROM outbox WHERE status = 'pending' ORDER BY id`),
@@ -147,7 +163,15 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
     countAll: db.prepare('SELECT count(*) AS n FROM fulfillments'),
     countOrder: db.prepare('SELECT count(*) AS n FROM fulfillments WHERE order_id = ?'),
     countActive: db.prepare('SELECT count(*) AS n FROM fulfillments WHERE order_id = ? AND revoked_at IS NULL'),
+    audit: db.prepare('INSERT INTO audit (at, action, order_id, payment_id, event_id) VALUES (?, ?, ?, ?, ?)'),
+    auditTrail: db.prepare('SELECT action, at, order_id AS "order", payment_id AS payment, event_id AS event FROM audit ORDER BY id'),
   };
+
+  // Called inside the transaction that makes the change, so a state change and its entry commit together.
+  function audit(action: AuditAction, ids: { order?: string; payment?: string; event?: string } = {}) {
+    if (has('skipAudit')) return;
+    sql.audit.run(now(), action, ids.order ?? null, ids.payment ?? null, ids.event ?? null);
+  }
 
   const nextId = (prefix: string) => `${prefix}_${String((sql.nextId.get() as { value: number }).value).padStart(4, '0')}`;
   const getOrder = (id: unknown): Order | null => {
@@ -179,6 +203,7 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
     }
     const order: Order = { id: nextId('ord'), customer, lines, amount, currency: CURRENCY, status: 'awaiting_payment', payment: null };
     sql.insertOrder.run(order.id, customer, JSON.stringify(lines), amount, CURRENCY, order.status);
+    log(`order.created order=${order.id} amount=${amount}`);
     return [201, view(order)];
   }
 
@@ -197,9 +222,9 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
 
   // Records the verified event and, for a matching success, the payment and a fulfillment job,
   // all in one transaction. The job runs afterwards, so a crash in fulfillment loses nothing.
-  function acceptEvent(event: any): Reply {
+  function acceptEvent(event: any, rawBody: string): Reply {
     if (!has('noIdempotency') && sql.seenEvent.get(event.id)) return [200, { received: true, duplicate: true }];
-    sql.recordEvent.run(event.id, now());
+    sql.recordEvent.run(event.id, now(), has('storeRawEvents') ? rawBody : null);
 
     const { payment_id, order_id, amount, currency } = event.data;
     const payment = getPayment(payment_id);
@@ -221,6 +246,7 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
       sql.cancelJobs.run(order.id);
       sql.revoke.run(now(), order.id);
       sql.orderStatus.run('refunded', order.id);
+      audit('refunded', { order: order.id, payment: payment.id, event: event.id });
       return [200, { received: true, refunded: order.id }];
     }
 
@@ -228,12 +254,15 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
     if (!succeeded) {
       if (event.type === 'payment.failed') {
         // A failure only settles a payment that is still open; events can arrive out of order.
-        if (payment.status === 'requires_payment') sql.paymentStatus.run('failed', payment.id);
-        else if (has('lastEventWins') && payment.status === 'succeeded') {
+        if (payment.status === 'requires_payment') {
+          sql.paymentStatus.run('failed', payment.id);
+          audit('payment-failed', { order: order.id, payment: payment.id, event: event.id });
+        } else if (has('lastEventWins') && payment.status === 'succeeded') {
           sql.paymentStatus.run('failed', payment.id);
           sql.cancelJobs.run(order.id);
           sql.revoke.run(now(), order.id);
           sql.orderStatus.run('awaiting_payment', order.id);
+          audit('payment-failed', { order: order.id, payment: payment.id, event: event.id });
         }
       }
       return [200, { received: true, ignored: 'not a success event' }];
@@ -247,6 +276,7 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
     if (!has('noIdempotency') && order.status !== 'awaiting_payment') return [200, { received: true, duplicate: true }];
     sql.orderStatus.run('paid', order.id);
     sql.enqueue.run(order.id, payment.id, eventId);
+    audit('paid', { order: order.id, payment: payment.id, event: eventId });
     return [200, { received: true, queued: order.id }];
   }
 
@@ -262,10 +292,13 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
           sql.fulfill.run(job.order, job.payment, job.event);
           sql.orderStatus.run('fulfilled', job.order);
           sql.jobDone.run(job.id);
+          audit('fulfilled', { order: job.order, payment: job.payment, event: job.event });
         });
+        log(`fulfillment.done order=${job.order}`);
         done++;
       } catch (err) {
         sql.jobFailed.run(String((err as Error)?.message ?? err), has('dropFailedJobs') ? 'failed' : 'pending', job.id);
+        log(`fulfillment.failed order=${job.order} attempt=${job.attempts + 1}`);
         failed++;
       }
     }
@@ -294,13 +327,21 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
   }
 
   function handleWebhook(rawBody: string, signature: unknown): Reply {
-    if (!has('skipSignature') && !verify(rawBody, signature, secret, now())) return [400, { error: 'invalid signature' }];
+    if (has('logRawEvents')) log(`webhook.payload ${rawBody}`);
+    if (!has('skipSignature') && !verify(rawBody, signature, secret, now())) {
+      // Nothing in an unverified body is trusted, so the entry names no order.
+      if (!has('silentRejections')) audit('event-rejected');
+      log('webhook.rejected reason=invalid-signature' + (has('logSecret') ? ` secret=${secret}` : ''));
+      return [400, has('leakSecretInErrors') ? { error: 'invalid signature', debug: { secret } } : { error: 'invalid signature' }];
+    }
     let event: any;
     try { event = JSON.parse(rawBody); } catch { return [400, { error: 'invalid json' }]; }
     if (!event || typeof event.id !== 'string' || !event.data || typeof event.data !== 'object') return [400, { error: 'invalid event' }];
 
-    const reply = transaction(() => acceptEvent(event));
-    const queued = (reply[1] as { queued?: string }).queued;
+    const reply = transaction(() => acceptEvent(event, rawBody));
+    const { queued, refunded, duplicate } = reply[1] as { queued?: string; refunded?: string; duplicate?: boolean };
+    // The event ID is logged as JSON so a crafted ID can't forge a second log line.
+    log(`webhook.accepted event=${JSON.stringify(event.id)} outcome=${queued ? 'queued' : refunded ? 'refunded' : duplicate ? 'duplicate' : 'ignored'}`);
     if (!queued) return reply;
     drainOutbox();
     const job = sql.jobStatus.get(event.id) as { status: string } | undefined;
@@ -311,6 +352,12 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
     ((orderId === undefined ? sql.countAll.get() : sql.countOrder.get(orderId)) as { n: number }).n;
   // Fulfillments still in force: not reversed by a refund.
   const activeFulfillments = (orderId: string) => (sql.countActive.get(orderId) as { n: number }).n;
+  const auditTrail = () => sql.auditTrail.all() as unknown as AuditEntry[];
+  // Every stored row as text, for inspecting what the checkout retains.
+  function dump(): string[] {
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as { name: string }[];
+    return tables.flatMap(({ name }) => db.prepare(`SELECT * FROM "${name}"`).all().map(row => `${name} ${JSON.stringify(row)}`));
+  }
 
   // Jobs left pending by a crash or failed side effect are picked up on start.
   drainOutbox();
@@ -346,5 +393,5 @@ export function createCheckout({ secret, defects = [], now = () => Math.floor(Da
     }
   }
 
-  return { handle, drainOutbox, reconcile, fulfillments, activeFulfillments, close: () => db.close() };
+  return { handle, drainOutbox, reconcile, fulfillments, activeFulfillments, auditTrail, dump, close: () => db.close() };
 }

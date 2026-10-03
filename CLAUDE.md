@@ -114,11 +114,15 @@ uv run python -m piaslab.library_report   # → analysis/reports/library/ (git-i
 - **On `main`:** evidence schema v1 ([ADR 009](docs/decisions/009-evidence-schema-v1.md),
   `packages/checks/src/evidence.ts`); ADR 007 accepted and the research plan, roadmap and portal
   headline rewritten for it; CodeQL workflow removed.
-- **On branch `feat/lifecycle-recovery-checks`:** lifecycle and recovery checks (24 checks across 8
+- **On `main` (PR #17):** lifecycle and recovery checks (24 checks across 8
   controls, 11 seeded defects). The reference checkout handles full refunds and reconciles dropped
   events; `SubjectAdapter` gained `activeFulfillments` and optional `faults`.
-- **Next (Phase 1):** checks for secrets, data minimization and audit (browser integrity waits for
-  the browser harness); harm oracle; mutation-based defects; metric v1 decisions. Then emulators
+- **On branch `feat/secrets-data-audit-checks`:** secrets, data-minimization and audit checks (30
+  checks across 11 controls, 17 seeded defects; coverage 95). `SubjectAdapter` gained optional
+  `artifacts` (secrets, responses, logs, stored rows, audit trail); the reference checkout writes a
+  log and an `audit` table; evidence schema 1.1 adds two oracles ([ADR 010](docs/decisions/010-evidence-schema-1-1-artifact-oracles.md)).
+  Milestone 7 is then done apart from browser integrity (needs the browser harness).
+- **Next (Phase 1):** harm oracle; mutation-based defects; metric v1 decisions. Then emulators
   (Phase 2), then containers, architecture variants and run ingest into the portal (Phase 3).
 
 ## Deployment

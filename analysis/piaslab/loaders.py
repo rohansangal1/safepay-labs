@@ -40,7 +40,8 @@ import pandas as pd
 SUPPORTED_METRIC_VERSIONS = frozenset({"0.1"})
 
 # Same rule for the evidence schema: a new version may rename or re-mean record fields.
-SUPPORTED_EVIDENCE_SCHEMA_VERSIONS = frozenset({"1.0"})
+# 1.1 only adds oracle values (ADR 010); the fields read here are unchanged.
+SUPPORTED_EVIDENCE_SCHEMA_VERSIONS = frozenset({"1.0", "1.1"})
 
 _RECORD_FIELDS = (
     "schema_version", "record_id", "check_id", "check_version", "observation_layer", "oracle",
