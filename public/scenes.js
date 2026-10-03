@@ -5,8 +5,9 @@
 
 const TAU = Math.PI * 2;
 const CREAM = '243,237,226';
-const RUST = '240,160,140';
-const GREEN = '159,211,173';
+const GREY = '128,121,112';
+const WHITE = '255,255,255';
+const BLUE = '140,159,255';
 const BG = '#121110';
 
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -162,14 +163,14 @@ const hero = () => {
     radii.forEach((r, i) => {
       const [ax, ay, az] = tilts[i];
       const xf = (p) => world(rotate(rotate(p, 0, 0, t * speeds[i]), ax, ay, az));
-      const rgb = mix(CREAM, RUST, flash[i]);
+      const rgb = mix(CREAM, WHITE, flash[i]);
       drawMesh(ctx, view, rings[i], xf, rgb, 0.75 + flash[i] * 0.5, 1 + flash[i] * 1.2, 2);
       drawMesh(ctx, view, ticks[i], xf, rgb, 0.9, 1, 2);
       flash[i] = Math.max(0, flash[i] - dt * 1.6);
     });
 
     const pulse = 1 + coreFlash * 0.18;
-    const coreRgb = mix(CREAM, GREEN, coreGood);
+    const coreRgb = mix(CREAM, BLUE, coreGood);
     drawMesh(ctx, view, core, (p) => world(rotate(scale(p, pulse), t * 0.3, t * 0.45, 0)), coreRgb, 1, 1.3, 0.6);
     drawMesh(ctx, view, inner, (p) => world(rotate(p, -t * 0.2, -t * 0.3, 0)), coreRgb, 0.45, 1, 0.4);
     const c0 = view.project(world([0, 0, 0]));
@@ -192,12 +193,12 @@ const hero = () => {
       const done = m.r <= stop;
       const pts = m.trail.map((p) => view.project(world(p)));
       for (let k = 1; k < pts.length; k++) {
-        ctx.strokeStyle = `rgba(${CREAM},${((k / pts.length) ** 1.5).toFixed(3)})`;
+        ctx.strokeStyle = `rgba(${mix(CREAM, BLUE, k / pts.length)},${((k / pts.length) ** 1.5).toFixed(3)})`;
         ctx.lineWidth = 1.8;
         ctx.beginPath(); ctx.moveTo(pts[k - 1][0], pts[k - 1][1]); ctx.lineTo(pts[k][0], pts[k][1]); ctx.stroke();
       }
       const head = pts[pts.length - 1];
-      dot(ctx, head[0], head[1], 3, CREAM, 1, 18);
+      dot(ctx, head[0], head[1], 3, BLUE, 1, 18);
       if (done) {
         if (m.fake) {
           flash[m.stopAt] = 1;
@@ -214,10 +215,10 @@ const hero = () => {
       s.life -= dt * 1.3;
       const b = view.project(world(s.p));
       if (s.life <= 0) { shards.splice(i, 1); continue; }
-      ctx.strokeStyle = `rgba(${RUST},${s.life.toFixed(3)})`;
+      ctx.strokeStyle = `rgba(${CREAM},${(s.life * 0.7).toFixed(3)})`;
       ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0] + (b[0] - a[0]) * 4, b[1] + (b[1] - a[1]) * 4); ctx.stroke();
-      dot(ctx, b[0], b[1], 1.6, RUST, s.life, 10);
+      dot(ctx, b[0], b[1], 1.6, CREAM, s.life, 10);
     }
   };
 };
@@ -239,12 +240,12 @@ const forged = () => {
     const ry = -0.5 + Math.sin(t * 0.6) * 0.25 + input.x * 0.4, rx = 0.25 + input.y * 0.2;
     const real = (o) => (p) => rotate(add(p, o), rx, ry, 0);
     drawMesh(ctx, view, c, real([-0.35, 0.3, -0.3]), CREAM, 0.95, 1.2);
-    drawMesh(ctx, view, seal, (p) => rotate(add(p, [0.45, -0.25, -0.25]), rx, ry, 0), GREEN, 1, 1.4);
+    drawMesh(ctx, view, seal, (p) => rotate(add(p, [0.45, -0.25, -0.25]), rx, ry, 0), BLUE, 1, 1.4);
     const glitch = (t % 2.2) > 1.6;
     const jitter = () => (glitch ? (Math.random() - 0.5) * 0.14 : 0);
     const fake = (p) => rotate(add(p, [0.35 + jitter(), -0.3, 0.35]), rx, ry, 0);
-    drawMesh(ctx, view, c, fake, RUST, glitch ? 0.5 + Math.random() * 0.5 : 0.85, 1.2);
-    drawMesh(ctx, view, broken, (p) => rotate(add(p, [1.15 + jitter(), -0.85, 0.4]), rx, ry, 0), RUST, 1, 1.4);
+    drawMesh(ctx, view, c, fake, GREY, glitch ? 0.5 + Math.random() * 0.5 : 0.85, 1.2);
+    drawMesh(ctx, view, broken, (p) => rotate(add(p, [1.15 + jitter(), -0.85, 0.4]), rx, ry, 0), GREY, 1, 1.4);
   };
 };
 
@@ -259,8 +260,8 @@ const replayed = () => {
     for (let k = 4; k >= 0; k--) {
       const a = t * 1.6 - k * 0.55;
       const p = view.project(xf([Math.cos(a) * 1.1, 0, Math.sin(a) * 1.1]));
-      if (k === 0) dot(ctx, p[0], p[1], 3, CREAM, 1, 16);
-      else dot(ctx, p[0], p[1], 2.6 - k * 0.3, RUST, (0.9 - k * 0.16).toFixed(2), 10);
+      if (k === 0) dot(ctx, p[0], p[1], 3.2, BLUE, 1, 18);
+      else dot(ctx, p[0], p[1], 2.6 - k * 0.3, GREY, (0.9 - k * 0.16).toFixed(2), 10);
     }
   };
 };
@@ -277,7 +278,7 @@ const reordered = () => {
     const place = (y, x) => (p) => rotate(add(p, [x, y, 0]), rx, ry, 0);
     drawMesh(ctx, view, plate, place(lerp(0.55, -0.55, swap), arc), CREAM, 0.95, 1.2);
     drawMesh(ctx, view, plate, place(0, 0), CREAM, 0.5, 1);
-    drawMesh(ctx, view, plate, place(lerp(-0.55, 0.55, swap), -arc), RUST, 0.95, 1.2);
+    drawMesh(ctx, view, plate, place(lerp(-0.55, 0.55, swap), -arc), GREY, 0.95, 1.2);
   };
 };
 
@@ -287,7 +288,7 @@ const mismatched = () => {
   const frame = box(1.7, 1.7, 0.02);
   const good = sphere(0.42, 6, 10, 28);
   const bad = box(1.05, 1.05, 1.05);
-  let flash = 0, flashRgb = GREEN;
+  let flash = 0, flashRgb = BLUE;
   return (ctx, w, h, t, dt, input) => {
     const view = makeView(w, h, w / 2, h / 2, Math.min(w, h) * 0.28);
     const rx = 0.15 + input.y * 0.2, ry = -0.75 + input.x * 0.4;
@@ -296,13 +297,13 @@ const mismatched = () => {
     let z;
     if (!isBad) z = lerp(3, -3, ease(c));
     else z = c < 0.45 ? lerp(3, 0.62, ease(c / 0.45)) : lerp(0.62, 3, ease((c - 0.45) / 0.55));
-    if (!isBad && Math.abs(z) < 0.15) { flash = 1; flashRgb = GREEN; }
-    if (isBad && c > 0.43 && c < 0.47) { flash = 1; flashRgb = RUST; }
+    if (!isBad && Math.abs(z) < 0.15) { flash = 1; flashRgb = BLUE; }
+    if (isBad && c > 0.43 && c < 0.47) { flash = 1; flashRgb = WHITE; }
     flash = Math.max(0, flash - dt * 1.5);
     drawMesh(ctx, view, frame, xf, CREAM, 0.35, 1);
     drawMesh(ctx, view, gate, xf, mix(CREAM, flashRgb, flash), 1, 1.4 + flash);
     const shape = isBad ? bad : good;
-    const rgb = isBad ? mix(CREAM, RUST, clamp(1 - Math.abs(c - 0.45) * 3)) : CREAM;
+    const rgb = isBad ? mix(CREAM, GREY, clamp(1 - Math.abs(c - 0.45) * 3)) : BLUE;
     drawMesh(ctx, view, shape, (p) => xf(add(rotate(p, t * 0.8, t * 0.6, 0), [0, 0, z])), rgb, 0.9, 1.2);
   };
 };
@@ -337,7 +338,7 @@ const field = () => {
       ctx.fillStyle = BG;
       ctx.fill();
       const a = clamp(0.25 + (r / rows) * 0.75);
-      ctx.strokeStyle = `rgba(${mix(CREAM, RUST, clamp(hot * 1.4))},${a.toFixed(3)})`;
+      ctx.strokeStyle = `rgba(${mix(CREAM, BLUE, clamp(hot * 1.4))},${a.toFixed(3)})`;
       ctx.lineWidth = 1.1;
       ctx.beginPath();
       ctx.moveTo(pts[0][0], pts[0][1]);
@@ -374,11 +375,11 @@ const globe = () => {
         const p = view.project(xf(slerpUp(arc.a, arc.b, s)));
         if (s === tail) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]);
       }
-      ctx.strokeStyle = `rgba(${CREAM},0.85)`;
+      ctx.strokeStyle = `rgba(${BLUE},0.85)`;
       ctx.lineWidth = 1.3;
       ctx.stroke();
       const hp = view.project(xf(slerpUp(arc.a, arc.b, head)));
-      dot(ctx, hp[0], hp[1], 2.2, CREAM, 1, 12);
+      dot(ctx, hp[0], hp[1], 2.4, BLUE, 1, 14);
     }
   };
 };

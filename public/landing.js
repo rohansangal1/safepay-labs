@@ -248,7 +248,7 @@ const update = () => {
     const r = statement.getBoundingClientRect();
     const p = clamp((vh * 0.82 - r.top) / (r.height + vh * 0.3));
     const lit = Math.round(p * statementWords.length);
-    statementWords.forEach((w, i) => w.classList.toggle('on', i < lit));
+    statementWords.forEach((w, i) => { w.classList.toggle('on', i < lit); w.classList.toggle('edge', i === lit - 1); });
   }
 
 
