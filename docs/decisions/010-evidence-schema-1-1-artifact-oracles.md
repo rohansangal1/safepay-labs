@@ -1,6 +1,6 @@
 # 010. Evidence schema 1.1: oracles for retained artifacts and the audit trail
 
-- **Status:** Proposed, 2026-10-03
+- **Status:** Accepted, 2026-10-03
 
 ## Context
 The checks for secret isolation, data minimization and audit do not count fulfillments. They read what a subject leaves behind: its HTTP responses, log lines, stored rows and audit trail. Schema 1.0 ([ADR 009](009-evidence-schema-v1.md)) allows two oracles, `fulfillment-records` and `http-response`, and neither describes a decision made from logs or an audit trail. ADR 009 requires a version bump and a record here for any change to a field's meaning.

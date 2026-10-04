@@ -18,5 +18,5 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
-      # Fails if data/runs or the site's generated files are stale.
+      # Fails if data/runs, data/harm or the site's generated files are stale.
       - run: npm run check:generated

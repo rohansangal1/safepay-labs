@@ -89,6 +89,12 @@ export async function openReference(defects: string[] = []): Promise<SubjectAdap
       },
     },
 
+    ledger: {
+      capture: async (payment, amount) => { ledger.capture(payment, amount); },
+      refund: async payment => { ledger.refund(payment); },
+      entries: async () => ledger.entries(),
+    },
+
     artifacts: {
       secrets: async () => [secret],
       responses: async () => [...responses],

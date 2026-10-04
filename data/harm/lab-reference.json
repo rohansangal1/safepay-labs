@@ -1,0 +1,1762 @@
+{
+  "kind": "harm-run",
+  "target": "owned reference checkout (local, fake provider)",
+  "note": "Outcomes read from the provider ledger and the fulfillment records. Never an input to the score.",
+  "runs": [
+    {
+      "id": "LAB-0",
+      "label": "Baseline",
+      "defects": [],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": false,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-1",
+      "label": "Seeded: trustClientAmount",
+      "defects": [
+        "trustClientAmount"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": true,
+        "counts": {
+          "underpayment": 1,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": [
+              {
+                "type": "underpayment",
+                "amount": 2499,
+                "scenario": "price-tamper",
+                "order": "ord_0001"
+              }
+            ]
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-2",
+      "label": "Seeded: skipAmountMatch",
+      "defects": [
+        "skipAmountMatch"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": true,
+        "counts": {
+          "underpayment": 1,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": [
+              {
+                "type": "underpayment",
+                "amount": 2499,
+                "scenario": "partial-capture",
+                "order": "ord_0001"
+              }
+            ]
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-3",
+      "label": "Seeded: skipOrderMatch",
+      "defects": [
+        "skipOrderMatch"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": true,
+        "counts": {
+          "underpayment": 1,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": [
+              {
+                "type": "underpayment",
+                "amount": 2500,
+                "scenario": "one-payment-two-orders",
+                "order": "ord_0002"
+              }
+            ]
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-4",
+      "label": "Seeded: skipSignature",
+      "defects": [
+        "skipSignature"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": true,
+        "counts": {
+          "underpayment": 1,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": [
+              {
+                "type": "underpayment",
+                "amount": 2500,
+                "scenario": "forged-success",
+                "order": "ord_0001"
+              }
+            ]
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-5",
+      "label": "Seeded: fulfillOnAnyStatus",
+      "defects": [
+        "fulfillOnAnyStatus"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": true,
+        "counts": {
+          "underpayment": 1,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": [
+              {
+                "type": "underpayment",
+                "amount": 2500,
+                "scenario": "failed-payment",
+                "order": "ord_0001"
+              }
+            ]
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-6",
+      "label": "Seeded: skipOwnership",
+      "defects": [
+        "skipOwnership"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": true,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 2,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": [
+              {
+                "type": "cross-account",
+                "scenario": "curious-neighbour",
+                "order": "ord_0001",
+                "amount": null
+              },
+              {
+                "type": "cross-account",
+                "scenario": "curious-neighbour",
+                "order": "ord_0001",
+                "amount": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-7",
+      "label": "Seeded: noIdempotency",
+      "defects": [
+        "noIdempotency"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": true,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 1,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": [
+              {
+                "type": "double-fulfillment",
+                "amount": 12500,
+                "scenario": "webhook-retry-storm",
+                "order": "ord_0001"
+              }
+            ]
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-8",
+      "label": "Seeded: ignoreRefunds",
+      "defects": [
+        "ignoreRefunds"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": true,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 1
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": [
+              {
+                "type": "inconsistent-refund",
+                "amount": 2500,
+                "scenario": "refund-after-delivery",
+                "order": "ord_0001"
+              }
+            ]
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-9",
+      "label": "Seeded: lastEventWins",
+      "defects": [
+        "lastEventWins"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": true,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 1,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "errored",
+            "harms": [
+              {
+                "type": "lost-order",
+                "amount": 2500,
+                "scenario": "late-failure",
+                "order": "ord_0001"
+              }
+            ]
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-10",
+      "label": "Seeded: dropFailedJobs",
+      "defects": [
+        "dropFailedJobs"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": true,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 1,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": [
+              {
+                "type": "lost-order",
+                "amount": 2500,
+                "scenario": "worker-outage",
+                "order": "ord_0001"
+              }
+            ]
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-11",
+      "label": "Seeded: noReconciliation",
+      "defects": [
+        "noReconciliation"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": true,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 1,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": [
+              {
+                "type": "lost-order",
+                "amount": 2500,
+                "scenario": "dropped-webhook",
+                "order": "ord_0001"
+              }
+            ]
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-12",
+      "label": "Seeded: leakSecretInErrors",
+      "defects": [
+        "leakSecretInErrors"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": false,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-13",
+      "label": "Seeded: logSecret",
+      "defects": [
+        "logSecret"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": false,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-14",
+      "label": "Seeded: logRawEvents",
+      "defects": [
+        "logRawEvents"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": false,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-15",
+      "label": "Seeded: storeRawEvents",
+      "defects": [
+        "storeRawEvents"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": false,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-16",
+      "label": "Seeded: skipAudit",
+      "defects": [
+        "skipAudit"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": false,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "LAB-17",
+      "label": "Seeded: silentRejections",
+      "defects": [
+        "silentRejections"
+      ],
+      "harm": {
+        "scenarios_version": "1",
+        "subject_id": "lab:owned-checkout",
+        "any_harm": false,
+        "counts": {
+          "underpayment": 0,
+          "double-fulfillment": 0,
+          "cross-account": 0,
+          "lost-order": 0,
+          "inconsistent-refund": 0
+        },
+        "scenarios": [
+          {
+            "id": "honest-purchase",
+            "description": "A buyer orders, pays in full and the provider reports it",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "price-tamper",
+            "description": "A buyer sends their own price with the order, then pays whatever the shop asks",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "partial-capture",
+            "description": "The provider captures less than the order total and reports the smaller amount",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "one-payment-two-orders",
+            "description": "A buyer pays for one order, then a second event for that payment names their other order",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "forged-success",
+            "description": "An attacker posts an unsigned success event; no money moves",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "failed-payment",
+            "description": "The card is declined and the provider reports the failure",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "webhook-retry-storm",
+            "description": "The provider retries one event, sends a second event for the same payment and delivers concurrently",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "refund-after-delivery",
+            "description": "A fulfilled order is refunded in full",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "late-failure",
+            "description": "A failure event from an earlier declined attempt arrives after the payment succeeded",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "worker-outage",
+            "description": "Fulfillment is down when the payment succeeds, then comes back",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "dropped-webhook",
+            "description": "The payment is captured but its event never arrives",
+            "status": "ran",
+            "harms": []
+          },
+          {
+            "id": "curious-neighbour",
+            "description": "Another customer tries to read and to pay for the buyer's order",
+            "status": "ran",
+            "harms": []
+          }
+        ]
+      }
+    }
+  ]
+}

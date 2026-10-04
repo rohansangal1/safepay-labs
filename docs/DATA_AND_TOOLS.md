@@ -71,7 +71,7 @@ Use a durable queue and atomic database transaction/outbox for reference fulfill
 
 ## Validation sequence
 1. Scorer edge cases; reference checkout with seeded defects, each caught only by its own control (implemented).
-2. Check registry and evidence records (implemented); harm oracle; detection rate on automatically mutated variants.
+2. Check registry and evidence records (implemented); harm oracle (implemented, `data/harm/`); detection rate on automatically mutated variants.
 3. Stripe and Square emulators conformance-tested against recorded sandbox events; reference passes against both real sandboxes.
 4. Container isolation, architecture variants and open-source shops; pilot on a small variant matrix with blind adjudication and redaction/egress tests.
 5. Architecture sweep and literature review; publish the subject manifest, completion counts and exclusions.

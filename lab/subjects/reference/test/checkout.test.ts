@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { assess } from '../assess.ts';
+import { measureHarm } from '../harm.ts';
 import { DEFECTS, createCheckout, type CheckoutOptions, type Defect } from '../app.ts';
 import { sign, verify } from '../../../emulator/signature.ts';
 import { paymentEvent, signedDelivery, type PaymentEvent } from '../../../emulator/provider.ts';
@@ -61,6 +62,43 @@ test('baseline checkout passes every assessed control', async () => {
 for (const [defect, control] of Object.entries(target)) {
   test(`seeded ${defect} is detected only by ${control}`, async () => {
     assert.deepEqual(failed(await assess([defect])), [control]);
+  });
+}
+
+// The money or state harm each seeded defect causes, measured by the harm oracle. Leaks and a
+// missing audit trail move no money on their own, so those defects show none.
+const harm: Record<Defect, string[]> = {
+  trustClientAmount: ['underpayment'],
+  skipAmountMatch: ['underpayment'],
+  skipOrderMatch: ['underpayment'],
+  skipSignature: ['underpayment'],
+  fulfillOnAnyStatus: ['underpayment'],
+  skipOwnership: ['cross-account'],
+  noIdempotency: ['double-fulfillment'],
+  ignoreRefunds: ['inconsistent-refund'],
+  lastEventWins: ['lost-order'],
+  dropFailedJobs: ['lost-order'],
+  noReconciliation: ['lost-order'],
+  leakSecretInErrors: [],
+  logSecret: [],
+  logRawEvents: [],
+  storeRawEvents: [],
+  skipAudit: [],
+  silentRejections: [],
+};
+
+test('harm oracle: the baseline checkout runs every scenario and shows no harm', async () => {
+  const report = await measureHarm([]);
+  assert.ok(report.scenarios.every(s => s.status === 'ran'));
+  assert.equal(report.any_harm, false);
+  assert.deepEqual(await measureHarm([]), report, 'committed fixtures must not change between runs');
+});
+
+for (const [defect, expected] of Object.entries(harm)) {
+  test(`harm oracle: seeded ${defect} causes ${expected.join(', ') || 'no harm'}`, async () => {
+    const report = await measureHarm([defect]);
+    assert.deepEqual(Object.entries(report.counts).filter(([, n]) => n).map(([type]) => type), expected);
+    assert.equal(report.any_harm, expected.length > 0);
   });
 }
 

@@ -41,11 +41,22 @@ export function signedDelivery(event: PaymentEvent, secret: string, timestamp = 
  * Lets the lab model a webhook that was dropped: the money moved, but no event arrived.
  */
 export function createLedger() {
-  const captured = new Map<string, { status: string; amount: number; currency: string }>();
+  const payments = new Map<string, { order: string; captured: number; refunded: number; currency: string }>();
   return {
-    capture(payment: PaymentRef) {
-      captured.set(payment.id, { status: 'succeeded', amount: payment.amount, currency: payment.currency });
+    capture(payment: PaymentRef, amount = payment.amount) {
+      payments.set(payment.id, { order: payment.order, captured: amount, refunded: 0, currency: payment.currency });
     },
-    lookup: (paymentId: string) => captured.get(paymentId) ?? null,
+    /** A full refund of whatever was captured. */
+    refund(payment: PaymentRef) {
+      const p = payments.get(payment.id);
+      if (p) p.refunded = p.captured;
+    },
+    /** What a merchant sees when it asks about one payment. */
+    lookup(paymentId: string) {
+      const p = payments.get(paymentId);
+      if (!p) return null;
+      return { status: p.refunded ? 'refunded' : 'succeeded', amount: p.captured, currency: p.currency };
+    },
+    entries: () => [...payments].map(([payment, p]) => ({ payment, ...p })),
   };
 }

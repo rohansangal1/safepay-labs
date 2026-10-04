@@ -13,4 +13,4 @@ Short records of decisions that shape the project. Add a new numbered file when 
 | [007](007-rescope-architectures-and-testing-tool.md) | Re-scope: architectures first, agent evidence from the literature, then a testing tool | Accepted |
 | [008](008-public-landing-and-researcher-portal.md) | Public landing page and researcher-only portal | Accepted |
 | [009](009-evidence-schema-v1.md) | Evidence schema v1 | Accepted |
-| [010](010-evidence-schema-1-1-artifact-oracles.md) | Evidence schema 1.1: oracles for retained artifacts and the audit trail | Proposed |
+| [010](010-evidence-schema-1-1-artifact-oracles.md) | Evidence schema 1.1: oracles for retained artifacts and the audit trail | Accepted |
