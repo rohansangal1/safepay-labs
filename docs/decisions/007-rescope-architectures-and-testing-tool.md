@@ -1,6 +1,6 @@
 # 007. Re-scope: architectures first, agent evidence from the literature, then a testing tool
 
-- **Status:** Accepted, 2026-10-03
+- **Status:** Accepted, 2026-10-03. Amended by [011](011-agent-operators-django-sandbox-synthetic-data.md): adds Track B (agents operating payment tools) and runs it first.
 - **Supersedes in part:** [001](001-research-headline.md) (the headline question and the agent experiment).
 
 ## Context

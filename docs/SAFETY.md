@@ -19,6 +19,15 @@ Authorization from a merchant is not permission to attack a processor, CDN or un
 - **Provider sandboxes** are used only through documented test flows in our own accounts. Adversarial deliveries (forged, replayed or mismatched events) are sent only to our own subject endpoints, never to the provider.
 - **Tool scope gate.** The CLI and harness refuse targets that aren't loopback or listed in a signed scope file, and refuse to run when a live-mode key or live-mode provider object is detected. This ships in the first CLI release, not later.
 
+## Agents operating payment tools (Track B, [ADR 011](decisions/011-agent-operators-django-sandbox-synthetic-data.md))
+- **Agents touch only our sandbox.** An agent's tools reach only the Django payments sandbox in the same run's Docker stack. No agent gets a real provider key, a provider sandbox key, a real MCP server for a payment provider, or any tool that reaches the internet.
+- **Network.** The sandbox and tool server have no egress. The agent runner may reach only the configured model API hosts, enforced at the container network layer, not only by configuration.
+- **Synthetic data only.** Worlds, people, accounts, payees and invoices come from the seeded generator. Never put real names, emails, account numbers or card data into a world, prompt or task. The generator's tests check this.
+- **Model API keys** are the only secrets the lab needs. They live in a git-ignored `.env`, are passed only to the agent-runner container, and never appear in evidence, transcripts, logs or the portal. Each provider account has a spend cap, and each run has its own cap; a run that hits it stops and is recorded as an exclusion. The autonomous build loop never makes paid model calls.
+- **Manipulated tools stay in the lab.** B2's edited tool descriptions are research artifacts. They are never published to a public MCP registry, package index or marketplace, and never offered to anyone else's agent. Published examples are shown as text in the paper and dataset, not as installable tools.
+- **Transcripts** are evidence. They hold only synthetic data, but they are still redacted under the evidence policy before leaving the run (keys, tokens and anything that looks like a card number or email are scrubbed), and raw transcripts follow the 7-day ceiling for raw lab traces below.
+- **Disclosure.** If a model or agent framework shows behavior that could cause real financial harm beyond what's already published, report it privately to its maintainer before publishing details, as for open-source findings.
+
 ## Enforced controls for the future runner
 The lab runs only locally today: the reference checkout binds to 127.0.0.1 and makes no outbound calls. Implement these before any sandbox or external collection:
 - A signed/reviewed scope record naming exact origins, ports, account IDs, actions, environments, expiration, request budgets, owners and incident contacts.

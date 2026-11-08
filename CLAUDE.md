@@ -9,8 +9,15 @@ The project's name is **SafePay Labs**, in the UI and in the docs. Only machine 
 name: the GitHub repo and Vercel project (`payment-integration-lab`), the npm and Python package names,
 and the `pil_session` cookie.
 
-Research on **payment-integration security**. It measures whether payment integrations resist
-forged, replayed, reordered and mismatched provider events, using:
+Research on **which payment-system designs prevent money-level harm**, in two tracks:
+
+- **Track B (first): LLM agents operating payment tools.** They use MCP tools on a Django payments
+  sandbox with a double-entry ledger. B1 covers tool faults, with the API design as the treatment.
+  B2 covers manipulated tool descriptions and defenses, extending Faghih et al., EMNLP 2025.
+- **Track A: payment integrations under forged, replayed, reordered and mismatched provider
+  events.**
+
+Track A uses (and Track B reuses the harm-oracle approach, evidence format and portal):
 - **PIAS** — an evidence-aware assurance score (`packages/core`), with a `[lower, upper]` range,
   coverage, and a critical-control gate. Spec: [docs/METRIC.md](docs/METRIC.md).
 - a **harm oracle** that measures money/state outcomes (underpayment, double fulfillment,
@@ -30,6 +37,26 @@ harm.** Primary subject = owned **architecture variants**, plus open-source shop
   hosted portal never launches attacks.
 - **After the research:** an open-source tool for end-to-end payment testing without real card data.
 - **ML:** wanted, undefined; build nothing for it until a concrete use is written down.
+
+### Amended by [ADR 011](docs/decisions/011-agent-operators-django-sandbox-synthetic-data.md) (proposed 2026-11-08): Track B first
+- **Agents as operators.** Agents call payment tools at run time. Coding agents stay a literature
+  review.
+- **Stack for Track B:**
+  - `lab/sandbox/`: Django + Postgres sandbox (ledger, intents, refunds, payouts, idempotency, fault
+    layer, test-control API, admin);
+  - `lab/agents/`: MCP tool server, LangChain/LangGraph runner, agent harm oracle;
+  - `lab/synth/`: seeded generator of worlds, tasks with expected ledger end states, fault schedules
+    and tool manifests;
+  - `lab/docker/`: a fresh compose stack per run.
+
+  These form one uv workspace, with dependencies pinned in `uv.lock`.
+- **Ledger rules:** integer minor units, never floats; immutable journal entries that sum to zero;
+  cached balances updated in the same transaction under `select_for_update()`; a drift check.
+- **Agent harms** (from the ledger vs the expected end state): duplicate payment, wrong amount,
+  wrong payee, unauthorized action, lost payment, false report. Never an LLM judge.
+- **Order of work:** Track B (B1 pilot by about week 7), then Track A at reduced scope: browser
+  harness parked, 1–2 open-source shops.
+- **Synthetic data only;** model API keys are the only secrets, with spend caps.
 
 ## Safety boundary (hard rule)
 Everything runs against **software we own or open-source software we run locally** with our own
@@ -54,7 +81,10 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
   enforces it.
 - **Metric changes are versioned** and need an ADR + a metric-version bump ([CONTRIBUTING.md](CONTRIBUTING.md)).
 - **Every new check needs a failing case** on a subject lacking the control, and must pass on the reference.
-- **Never commit** real card data, live keys, raw HAR files or unredacted traces.
+- **Never commit** real card data, live keys, model API keys, raw HAR files, unredacted traces or
+  raw agent transcripts.
+- **Agent runs cost money.** Only a human starts paid model runs. The cloud loop and interactive
+  agents build and test with a scripted or mock model, never a paid API.
 - **Nothing from the portal goes in `public/`.** Research data and results stay under `site/`; the
   landing page shows no roadmap or results at all. Researcher passwords and `DATABASE_URL` never
   enter the repo.
@@ -64,6 +94,8 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
 - `packages/oracle` — harm oracle (zero deps): end-to-end scenarios judged from the provider ledger
   and fulfillment records. Shares only `SubjectAdapter` with the checks; never feeds the score.
 - `lab/` — reference checkout, fake provider/signature emulator, assessment harness, seeded defects.
+  Planned for Track B (ADR 011): `lab/sandbox` (Django), `lab/agents` (MCP tools, runner, agent harm
+  oracle), `lab/synth` (generator) and `lab/docker` (compose). These form one uv workspace.
 - `scripts/` — `build-site.ts`, the daily library updater (`update-library.ts`, `library.ts`).
 - `analysis/` — Python (uv, 3.12): reads `data/runs/` and `data/library.json`; PIAS run loaders,
   cluster bootstrap, and library exploratory analysis. Reads only; never writes into `data/`.
@@ -128,8 +160,18 @@ uv run python -m piaslab.library_report   # → analysis/reports/library/ (git-i
 - **On branch `feat/harm-oracle`:** harm oracle (`packages/oracle`, 12 scenarios, `npm run harm`).
   `SubjectAdapter` gained optional `ledger`; the fake provider's ledger records captures and refunds.
   Harm results are not in the portal or the Python loaders yet.
-- **Next (Phase 1):** mutation-based defects; metric v1 decisions; harm results in the portal and loaders. Then emulators
-  (Phase 2), then containers, architecture variants and run ingest into the portal (Phase 3).
+- **On branch `docs/agent-operators-rescope` (stacked on `feat/harm-oracle`):** ADR 011 (proposed).
+  It adds Track B and runs it first; PLAN, RESEARCH_PLAN (draft 0.4), the roadmap (milestones
+  27–38 added; phases renumbered; browser harness parked), SAFETY, LITERATURE, DATA_AND_TOOLS,
+  README and this file were updated with it.
+- **Next (Phase 2, Track B):**
+  - week 0: reproduce one Faghih et al. result (milestone 31);
+  - then the Docker stack and Django ledger service (27–28);
+  - then the fault layer and control API (29) and the synthetic generator (30);
+  - then the tool server, the runner and the agent harm oracle (32–34), and the B1 pilot (35).
+
+  The deferred Phase 1 items (mutation-based defects, metric v1, harm results in the portal and
+  loaders) come back with Track A after the B1 results.
 
 ## Deployment
 On **Vercel** (project `payment-integration-lab`, Node 24): `public/` is the static output, and
