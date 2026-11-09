@@ -142,6 +142,39 @@
           "vibe coding"
         ]
       ]
+    },
+    {
+      "name": "Tool-using agents: failures, idempotency and tool selection",
+      "query": "(abs:\"tool calling\" OR abs:\"tool use\" OR abs:\"function calling\" OR abs:\"tool-using\" OR abs:MCP OR abs:\"Model Context Protocol\") AND (abs:agent OR abs:agents) AND (abs:idempotency OR abs:idempotent OR abs:retry OR abs:retries OR abs:duplicate OR abs:\"non-atomic\" OR abs:\"tool selection\" OR abs:\"tool description\" OR abs:\"tool descriptions\" OR abs:\"tool preference\" OR abs:payment OR abs:payments)",
+      "must": [
+        [
+          "tool calling",
+          "tool call",
+          "tool calls",
+          "tool use",
+          "function calling",
+          "tool-using",
+          "MCP",
+          "Model Context Protocol"
+        ],
+        [
+          "idempotency",
+          "idempotent",
+          "retry",
+          "retries",
+          "duplicate",
+          "non-atomic",
+          "tool selection",
+          "tool description",
+          "tool descriptions",
+          "tool preference",
+          "tool preferences",
+          "payment",
+          "payments",
+          "transfer",
+          "refund"
+        ]
+      ]
     }
   ],
   "per_query": 25,

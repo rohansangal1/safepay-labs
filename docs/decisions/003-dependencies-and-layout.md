@@ -1,6 +1,6 @@
 # 003. Zero-dependency core, pinned dependencies in the lab
 
-- **Status:** Accepted, 2026-09-27. Amended by [008](008-public-landing-and-researcher-portal.md): adds `portal/` (Python, pinned dependencies) and `public/`.
+- **Status:** Accepted, 2026-09-27. Amended by [008](008-public-landing-and-researcher-portal.md): adds `portal/` (Python, pinned dependencies) and `public/`. Amended by [011](011-agent-operators-django-sandbox-synthetic-data.md): `lab/` may hold Python projects (`lab/sandbox`, `lab/agents`, `lab/synth`; one uv workspace with a committed `uv.lock`) and Dockerfiles pinned by image digest.
 
 ## Context
 The project should become a tool people trust enough to point at their own checkout. The research lab, however, needs browsers, containers and provider SDKs.

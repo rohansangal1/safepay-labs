@@ -5,6 +5,15 @@ Distinguish subject, run, check, harm scenario and finding. A **subject** is one
 
 Each subject carries its source (variant, open-source or calibration), provider, checkout architecture, fulfillment trigger, enabled security layers and split. Each run adds commit SHA, dependency lock hash, provider API/SDK versions, instrument version, metric version, scope authorization ID/expiry, collection start/end, infrastructure version, navigation outcome and exclusion reason. Keep unit identifiers stable across reruns.
 
+**Track B units** ([ADR 011](decisions/011-agent-operators-django-sandbox-synthetic-data.md)): world, task, condition, agent run, harm. A **world** is one generated sandbox state (generator version + seed). A **task** is a user instruction with its expected ledger end state, admitted only after a scripted solver reaches that state. A **condition** is design level × fault type × fault rate (B1) or tool manifest × defense (B2). An **agent run** is one model attempting one task under one condition. It records:
+- the model ID, provider and date; the system-prompt and tool-manifest hashes;
+- sampling settings and framework retry settings;
+- the fault schedule seed; the spend; the redacted transcript and tool calls;
+- the final ledger diff;
+- the exclusion reason, if any.
+
+These go into evidence schema 1.2, which gets its own ADR when it's built.
+
 Evidence record, schema v1 ([ADR 009](decisions/009-evidence-schema-v1.md), `packages/checks/src/evidence.ts`). One per check run:
 ```json
 {
@@ -66,6 +75,17 @@ Implemented so far: the PIAS engine (`packages/core`), the SubjectAdapter interf
 Scope gate → scheduler → subject in its own container (architecture variant, open-source shop or reference) → SubjectAdapter → sandbox or emulator.
 Browser, merchant database and provider events → evidence records under the redaction policy → invariant oracle → versioned scorer → researcher portal (stores and shows runs) → research dataset.
 Runs start locally or in CI, never from the hosted portal.
+
+Track B, per agent run: generator (seed → world, task, fault schedule, tool manifest) → fresh Docker compose stack (Django sandbox + Postgres with no egress, MCP tool server, agent runner allowed only the model API hosts) → agent attempts the task → the test-control API reads the ledger → agent harm oracle → evidence record (schema 1.2) → portal → research dataset. The stack is discarded after each run.
+
+| Role | Tool | Reason / limitation |
+|---|---|---|
+| Payments sandbox | Django + Postgres, Django admin | ORM transactions and row locks for the ledger; migrations; admin as an inspection console |
+| Ledger tests | pytest, Hypothesis | Property tests for invariants (sum to zero, one effect per intended payment); concurrency tests |
+| Agent tools | MCP server (Python SDK) | The protocol agents actually use; tool manifests can be swapped per condition |
+| Agent runner | LangChain/LangGraph | One code path across model providers. Framework retries must be set explicitly |
+| Synthetic data | Python generator (Faker plus seeded distributions) | Ground truth by construction; realism is limited to the stated distributions |
+| Isolation | Docker, compose, pinned image digests | Fresh stack per run; network egress enforced per container |
 
 Use a durable queue and atomic database transaction/outbox for reference fulfillment. Deduplicate by the business action as well as provider event identity: separate events can refer to one payment/order. Handle crash recovery, retries and delayed state without trusting the return page. The reference checkout is lab code for calibration, not production payment code.
 

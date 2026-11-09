@@ -31,6 +31,51 @@ Based on the Alipay-PIBench full text (arXiv HTML, v4), the Stripe post and the 
 
 **Risks to novelty.** Either benchmark could add an architecture ablation or cross-provider tasks. Position against both explicitly, and keep the harm oracle and the open-source shops as the parts they lack.
 
+## Track B: agents operating payment tools ([ADR 011](decisions/011-agent-operators-django-sandbox-synthetic-data.md))
+Search date: 8 November 2026. These are abstract- and summary-level reads; read each in full before the B1 pilot.
+
+1. **Faghih, Wang, Cheng, Bharti, Sriramanan, Balasubramanian, Hosseini and Feizi (EMNLP 2025), Tool Preferences in Agentic LLMs are Unreliable.**
+   - An LLM sees a tool only as a name and a description. Editing descriptions (assertive cues, claims of active maintenance and similar) substantially shifts which tool it calls.
+   - Its "correct usage rate" metric is the one B2 adopts. Not about payments.
+   - The basis for B2 and RQ7, from the UMD Reliable AI Lab. Code is public.
+   - [ACL Anthology](https://aclanthology.org/2025.emnlp-main.1060/), [arXiv 2505.18135](https://arxiv.org/abs/2505.18135), [code](https://github.com/kazemf78/llm-unreliable-tool-preferences).
+2. **Mansoor, Rana and Phadke (arXiv 2608.02645, Aug 2026), Verified Tool Calls Improve LLM Agent Reliability Under Non-Atomic Failures.**
+   - Four non-atomic failure modes (timeout after dispatch, delayed visibility, partial success, stale conflict) in a seeded simulator.
+   - An agent-side verify-before-retry wrapper cuts duplicate side effects sharply against a retry-only baseline.
+   - Limits: one model (Gemini Flash-Lite), two non-payment tasks, 25 episodes per cell. Richer APIs are listed as future work.
+   - The closest prior work to B1. B1 borrows its failure taxonomy and differs in three ways: the *provider-side* API design is the treatment, the domain is payments with a double-entry ledger, and several models are compared.
+   - [Hugging Face papers](https://huggingface.co/papers/2608.02645), [arXiv](https://arxiv.org/abs/2608.02645).
+3. **Yao, Shinn, Razavi and Narasimhan (ICLR 2025), τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains.**
+   - Agents use database API tools under domain policies. Success means the final database state matches an annotated goal state, and pass^k measures consistency over repeated trials.
+   - Retail and airline, no fault injection.
+   - B1 borrows end-state scoring and pass^k.
+   - [arXiv 2406.12045](https://arxiv.org/abs/2406.12045), [code](https://github.com/sierra-research/tau-bench).
+4. **Debenedetti, Zhang, Balunović, Beurer-Kellner, Fischer and Tramèr (NeurIPS 2024 Datasets & Benchmarks), AgentDojo.**
+   - An extensible environment for prompt injection through tool outputs: 97 tasks and 629 security cases across workspace, Slack, travel and banking. The banking suite has 11 tools and 16 user tasks.
+   - Tool outputs are deterministic, and the API design isn't varied.
+   - Adjacent to B2; B2's channel is the tool *description*, not tool output.
+   - [Proceedings](https://proceedings.neurips.cc/paper_files/paper/2024/hash/97091a5177d8dc64b1da8bf3e1f6fb54-Abstract.html), [code](https://github.com/ACAI-Security/agentdojo).
+5. **Uchibeke (arXiv 2609.22076, Sep 2026), APort Vault: Benchmarking AI Agent Payment Authorization with the Open Agent Passport.**
+   - Replays 4,371 human-written attacks against a payment agent across 14 models.
+   - Reports that a deterministic policy layer blocked all unpermitted transfers while payments still executed.
+   - A vendor preprint, scoped to one tool schema in a simulated bank. It supports B2's deterministic-policy defense as a comparison point. Treat claims as author-reported.
+   - [alphaXiv](https://www.alphaxiv.org/abs/2609.22076).
+6. **Protocol-Level Attacks on Agentic Commerce Platforms / AIP-Bench (2026 preprint)** (listed above). Agentic-commerce protocols remain out of scope; cite for its threat taxonomy.
+
+### Track B novelty matrix (8 Nov 2026)
+| | Faghih et al. | Mansoor et al. | τ-bench | AgentDojo (banking) | **This project (B1/B2)** |
+|---|---|---|---|---|---|
+| Domain | General tools | Generic CRM/invoice tasks | Retail, airline | Banking among four suites | **Payments: invoices, refunds, payouts on a double-entry ledger** |
+| What varies | Tool descriptions | Agent-side wrapper | Model, agent method | Attacks and defenses | **Provider-side API design** (B1); descriptions × defenses (B2) |
+| Faults injected | No | Yes, four types | No | No | **Yes**, the same four plus duplicate delivery |
+| Models | Several | One | Several | Several | **≥3, ≥2 providers, one open-weight** |
+| Outcome | Tool-usage rate | Success, duplicates | End-state match, pass^k | Utility, attack success | **Money harms from the ledger** (six types), success, pass^k |
+| Data | Benchmark tools | Two templates | Generated + annotated | Hand-built | **Seeded synthetic worlds; tasks verified by a scripted solver** |
+
+**Defensible contribution (Track B).** Which payment-API designs and defenses keep tool-using agents from causing money-level harm under ordinary faults and tool-supply manipulation, measured on a ledger across several models. Not claimed: that agents are unreliable under faults (Mansoor et al.), that descriptions steer tool choice (Faghih et al.), or end-state scoring (τ-bench).
+
+**Risks to novelty.** Mansoor et al. could extend to payments or to API-side designs; AgentDojo's banking suite could add faults. Re-check before freezing B1, and track both through the library job.
+
 ## Current implementation sources
 - [Stripe fulfillment](https://docs.stripe.com/payments/checkout/fulfill-orders): use authoritative payment completion and handle repeat fulfillment safely.
 - [Stripe webhooks](https://docs.stripe.com/webhooks): provider event handling and signature verification requirements.
