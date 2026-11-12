@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SafePay Labs — Making payments safer for everyone</title>
-  <meta name="description" content="Independent research into what makes online checkouts resist forged, replayed, reordered and mismatched payment events, so apps deliver what was paid for and nothing else.">
+  <title>SafePay Labs — Making Payments Safer</title>
+  <meta name="description" content="Independent research into which payment-system designs stop money going wrong, whether an AI agent is using payment tools or an app is acting on payment messages.">
   <meta name="theme-color" content="#f3ede2">
   <meta property="og:title" content="SafePay Labs">
-  <meta property="og:description" content="Independent research into checkouts that can't be tricked by fake payment messages.">
+  <meta property="og:description" content="Independent research into payment systems that move the right amount, to the right place, exactly once.">
   <meta property="og:type" content="website">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="preload" href="assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -42,9 +42,9 @@
       <div class="wrap hero-copy">
         <span class="chip reveal"><span class="dot"></span>Independent research · in progress</span>
         <h1 id="hero-title" class="split">
-          Making payments safer for <em class="rotator" data-words="everyone,apps,customers,developers">everyone</em>.
+          Making Payments <em>Safer</em>
         </h1>
-        <p class="lede reveal">We test whether a checkout can be tricked by a fake payment message, so the right order ships once, to the person who paid.</p>
+        <p class="lede reveal">We test the systems that move money, from AI agents using payment tools to the checkouts behind online shops, and measure which designs stop money going to the wrong place, twice, or nowhere at all.</p>
         <div class="actions reveal">
           <a class="button primary magnetic" href="#demo">See it work<span class="icon arrow-right" aria-hidden="true"></span></a>
           <a class="button ghost magnetic" href="#mission">Our mission</a>
@@ -57,7 +57,7 @@
           <div class="hero-media-shade" aria-hidden="true"></div>
 
           <div class="feed" aria-hidden="true" data-parallax="-0.08">
-            <div class="feed-title"><span class="live"></span>Incoming payment messages</div>
+            <div class="feed-title"><span class="live"></span>Payment activity</div>
             <div class="ev" data-verdict="ok">
               <div class="ev-row"><span class="ev-type">payment.succeeded</span><span class="ev-amt">$48.00</span></div>
               <div class="ev-verdict"><span class="icon shield-check"></span>Verified · accepted</div>
@@ -67,14 +67,14 @@
               <div class="ev-verdict"><span class="icon repeat"></span>Duplicate · ignored</div>
             </div>
             <div class="ev" data-verdict="bad">
-              <div class="ev-row"><span class="ev-type">payment.succeeded</span><span class="ev-amt strike">$0.48</span></div>
-              <div class="ev-verdict"><span class="icon scale"></span>Wrong amount · rejected</div>
+              <div class="ev-row"><span class="ev-type">agent · send_payout</span><span class="ev-amt strike">$480.00</span></div>
+              <div class="ev-verdict"><span class="icon users"></span>Payee not in task · blocked</div>
             </div>
           </div>
 
           <ul class="media-tags" aria-label="Project principles">
             <li>Only software we own</li>
-            <li>No real money or cards</li>
+            <li>Synthetic data, no real cards</li>
             <li>Open methods and data</li>
           </ul>
         </div>
@@ -82,9 +82,13 @@
     </section>
 
     <!-- ===================== Marquee ===================== -->
-    <section class="marquee-band" aria-label="What a careful checkout checks">
+    <section class="marquee-band" aria-label="What a careful payment system checks">
       <div class="marquee" data-marquee>
         <ul class="marquee-track">
+          <li><span class="icon layers"></span>Idempotency</li>
+          <li><span class="icon shield-check"></span>Payee policy</li>
+          <li><span class="icon send"></span>Confirm before send</li>
+          <li><span class="icon lock"></span>Pinned tools</li>
           <li><span class="icon fingerprint"></span>Signature</li>
           <li><span class="icon repeat"></span>Replays</li>
           <li><span class="icon scale"></span>Amount</li>
@@ -102,14 +106,15 @@
       <div class="wrap">
         <span class="eyebrow reveal">Our mission</span>
         <p class="statement" data-highlight>
-          Apps should trust a payment message exactly as much as it deserves. We find out which
-          designs make that safe, measure it honestly, and give the answers away.
+          Money should move exactly as intended: the right amount, to the right place, once. We find
+          out which designs make that true, for the AI agents now handling payments and for the apps
+          behind every checkout, measure it honestly, and give the answers away.
         </p>
 
         <ul class="pillars">
-          <li class="reveal"><span class="icon microscope"></span><h3>Measure, don't assume</h3><p>We attack real code and record what the money did.</p></li>
-          <li class="reveal"><span class="icon landmark"></span><h3>Count harm in money</h3><p>Outcomes a business would recognise.</p></li>
-          <li class="reveal"><span class="icon book-open"></span><h3>Give it away</h3><p>Plan, paper, data and a free tool.</p></li>
+          <li class="reveal"><span class="icon microscope"></span><h3>Measure, don't assume</h3><p>We run real code and real agents in our own sandbox and record what the money did.</p></li>
+          <li class="reveal"><span class="icon landmark"></span><h3>Count harm in money</h3><p>Read from a ledger, in outcomes a business would recognise. No guesswork.</p></li>
+          <li class="reveal"><span class="icon book-open"></span><h3>Give it away</h3><p>Methods, data and a free testing tool.</p></li>
           <li class="reveal"><span class="icon heart-handshake"></span><h3>Fix first</h3><p>Maintainers hear privately before anyone else.</p></li>
         </ul>
       </div>
@@ -120,7 +125,25 @@
       <div class="wrap">
         <div class="problem-head">
           <span class="eyebrow light reveal">The problem</span>
-          <h2 class="split">Four ways a payment message <em>lies.</em></h2>
+          <h2 class="split">Two places money <em>goes wrong.</em></h2>
+        </div>
+
+        <div class="problem-part">
+          <div class="problem-sub reveal">
+            <h3>When an AI agent holds the payment tools</h3>
+            <p>Agents are starting to pay invoices, issue refunds and send payouts. We test what happens when the tools they depend on fail or mislead them.</p>
+          </div>
+          <div class="risks">
+            <article class="risk reveal"><span class="icon repeat"></span><span class="attack-no">01</span><h4>A tool fails</h4><p>A timeout mid-payment, and the retry pays twice.</p></article>
+            <article class="risk reveal"><span class="icon siren"></span><span class="attack-no">02</span><h4>A tool misleads</h4><p>A planted tool description steers money to a payee the task never named.</p></article>
+            <article class="risk reveal"><span class="icon key-round"></span><span class="attack-no">03</span><h4>A step goes too far</h4><p>A refund or payout nobody asked for.</p></article>
+            <article class="risk reveal"><span class="icon badge-check"></span><span class="attack-no">04</span><h4>A report is wrong</h4><p>The agent says it paid. The ledger says otherwise.</p></article>
+          </div>
+        </div>
+
+        <div class="problem-sub reveal">
+          <h3>When an app trusts a payment message</h3>
+          <p>Payment companies tell an app that a payment happened by sending it a message. There are four ways that message can lie.</p>
         </div>
         <div class="attacks">
           <article class="attack reveal">
@@ -147,12 +170,15 @@
     <section class="section harm" aria-labelledby="harm-title">
       <div class="wrap">
         <span class="eyebrow reveal">What we measure</span>
-        <h2 id="harm-title" class="split">When a check is missing, <em>it costs money.</em></h2>
+        <h2 id="harm-title" class="split">When a safeguard is missing, <em>it costs money.</em></h2>
         <ul class="harms">
-          <li class="reveal"><span class="icon banknote-x"></span><b>Paid too little</b></li>
+          <li class="reveal"><span class="icon repeat"></span><b>Paid twice</b></li>
+          <li class="reveal"><span class="icon scale"></span><b>Wrong amount</b></li>
+          <li class="reveal"><span class="icon users"></span><b>Wrong payee</b></li>
+          <li class="reveal"><span class="icon banknote-x"></span><b>Payment lost</b></li>
           <li class="reveal"><span class="icon package-plus"></span><b>Delivered twice</b></li>
-          <li class="reveal"><span class="icon package-x"></span><b>Order lost</b></li>
-          <li class="reveal"><span class="icon users"></span><b>Wrong account</b></li>
+          <li class="reveal"><span class="icon key-round"></span><b>Unauthorised action</b></li>
+          <li class="reveal"><span class="icon badge-check"></span><b>False report</b></li>
           <li class="reveal"><span class="icon receipt"></span><b>Refund mismatch</b></li>
         </ul>
       </div>
@@ -216,13 +242,14 @@
           <span class="eyebrow reveal">Our approach</span>
           <h2 class="split">Build it. Attack it. <em>Measure the money.</em></h2>
           <ol class="steps">
-            <li class="reveal"><span class="step-no">01</span><div><h3>Build a careful reference</h3><p>A checkout that handles every case, plus copies with one deliberate flaw each.</p></div></li>
-            <li class="reveal"><span class="step-no">02</span><div><h3>Attack it locally</h3><p>Forged, replayed, reordered and mismatched messages, on our own machines.</p></div></li>
-            <li class="reveal"><span class="step-no">03</span><div><h3>Measure the harm</h3><p>Money and orders, plus a score that never counts an untested check as a pass.</p></div></li>
+            <li class="reveal"><span class="step-no">01</span><div><h3>Build a sandbox we own</h3><p>A payments service with a strict double-entry ledger and a careful reference checkout, plus copies with one deliberate flaw each.</p></div></li>
+            <li class="reveal"><span class="step-no">02</span><div><h3>Stress it locally</h3><p>Agents get payment tools that fail, time out or are described misleadingly. Checkouts get forged, replayed, reordered and mismatched messages. Every run starts in a fresh, sealed environment on our own machines.</p></div></li>
+            <li class="reveal"><span class="step-no">03</span><div><h3>Measure the harm</h3><p>We compare the ledger with what should have happened, so duplicate, misrouted and lost money is counted, not guessed. Checkouts also get a score that never counts an untested check as a pass.</p></div></li>
+            <li class="reveal"><span class="step-no">04</span><div><h3>Compare the designs</h3><p>Idempotency keys, payee and amount rules, confirm-before-send, pinned tool lists: which ones actually prevent the harm.</p></div></li>
           </ol>
           <ul class="safety reveal" aria-label="How we keep it safe">
             <li><span class="icon lock"></span>Only our own software</li>
-            <li><span class="icon eye-off"></span>No real money or cards</li>
+            <li><span class="icon eye-off"></span>Synthetic data, no real cards</li>
             <li><span class="icon heart-handshake"></span>Fix first, publish second</li>
           </ul>
         </div>
@@ -238,7 +265,7 @@
           <div class="cta-copy">
             <span class="eyebrow light">About</span>
             <h2 class="split">Independent research, <em>in the open.</em></h2>
-            <p>A public paper, a free tool and a dataset are on the way.</p>
+            <p>Our findings, an open dataset and a free tool for testing payments end to end without real card data are on the way.</p>
             <div class="actions">
               <a class="button cream magnetic" href="#top">Back to top</a>
               <a class="button outline-light magnetic" href="/devs/">Researcher sign-in<span class="icon arrow-right" aria-hidden="true"></span></a>

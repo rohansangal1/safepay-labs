@@ -82,10 +82,6 @@ const eachWord = (el, make) => {
           frag.append(/^\s+$/.test(part) ? ' ' : make(document.createTextNode(part)));
         }
         child.replaceWith(frag);
-      } else if (child.classList?.contains('rotator')) {
-        const holder = document.createElement('span');
-        child.replaceWith(holder);
-        holder.replaceWith(make(child)); // the rotating word moves as one unit
       } else if (child.nodeType === Node.ELEMENT_NODE) {
         walk(child);
       }
@@ -142,26 +138,6 @@ if (!reduceMotion) {
     const idx = siblings.indexOf(el);
     if (idx > 0) el.style.setProperty('--d', `${Math.min(idx, 6) * 0.09}s`);
   }
-}
-
-// ---------- Rotating word in the headline ----------
-
-const rotator = $('.rotator');
-if (rotator && !reduceMotion) {
-  const words = rotator.dataset.words.split(',').map((w) => w.trim());
-  let i = 0;
-  const swap = async () => {
-    rotator.classList.add('out');
-    await wait(420);
-    i = (i + 1) % words.length;
-    rotator.textContent = words[i];
-    rotator.classList.remove('out');
-    rotator.classList.add('in');
-    // Two frames so the "in" start state is painted before transitioning to rest.
-    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    rotator.classList.remove('in');
-  };
-  setInterval(swap, 3000);
 }
 
 // ---------- Mission statement: words fill in as it scrolls past ----------
@@ -246,7 +222,9 @@ const update = () => {
 
   if (statementWords.length) {
     const r = statement.getBoundingClientRect();
-    const p = clamp((vh * 0.82 - r.top) / (r.height + vh * 0.3));
+    // Starts as the top enters the lower screen and finishes once the bottom is 70% down the screen,
+    // so the last words are lit while the whole statement is still in view.
+    const p = clamp((vh * 0.9 - r.top) / (r.height + vh * 0.2));
     const lit = Math.round(p * statementWords.length);
     statementWords.forEach((w, i) => { w.classList.toggle('on', i < lit); w.classList.toggle('edge', i === lit - 1); });
   }
