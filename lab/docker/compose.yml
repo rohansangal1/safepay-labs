@@ -1,0 +1,66 @@
+# One disposable sandbox stack (ADR 011). Postgres keeps its data in tmpfs, so every `up` starts
+# from an empty, freshly migrated database and `down` discards it.
+#
+#   docker compose -f lab/docker/compose.yml up --build -d           # sandbox, no ports, no egress
+#   docker compose -f lab/docker/compose.yml --profile test run --rm tests
+#   docker compose -f lab/docker/compose.yml -f lab/docker/compose.inspect.yml up --build -d
+#                                                                     # + admin at 127.0.0.1:8000
+# The milestone-32/33 tool server and agent runner join this file later.
+name: safepay-sandbox
+
+x-db-url: &db-url postgres://sandbox:sandbox@db:5432/sandbox
+
+services:
+  db:
+    image: postgres:17-bookworm@sha256:665dc7b37ac52a17e298511414c21d23ffa4e6a6ef6225b3e5d59c7afb35e994
+    environment:
+      POSTGRES_USER: sandbox
+      POSTGRES_PASSWORD: sandbox
+      POSTGRES_DB: sandbox
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "sandbox", "-d", "sandbox"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks: [sandbox]
+
+  sandbox:
+    build:
+      context: ..
+      dockerfile: sandbox/Dockerfile
+    image: safepay-sandbox:dev
+    environment:
+      SANDBOX_DATABASE_URL: *db-url
+      SANDBOX_IDEMPOTENCY: ${SANDBOX_IDEMPOTENCY:-optional}
+      SANDBOX_SEED_DEMO: ${SANDBOX_SEED_DEMO:-1}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks: [sandbox]
+
+  tests:
+    profiles: [test]
+    image: safepay-sandbox:dev
+    build:
+      context: ..
+      dockerfile: sandbox/Dockerfile
+    command: ["test", "-q"]
+    environment:
+      SANDBOX_DATABASE_URL: *db-url
+      HYPOTHESIS_PROFILE: ephemeral
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [sandbox]
+
+networks:
+  # internal: no route out of the stack. The sandbox has no egress (SAFETY.md).
+  sandbox:
+    internal: true

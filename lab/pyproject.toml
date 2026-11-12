@@ -1,0 +1,4 @@
+# One uv workspace for the Python projects under lab/ (ADR 003 as amended by ADR 011).
+# This root is virtual: it holds no code of its own, only the member list and the shared lock.
+[tool.uv.workspace]
+members = ["sandbox"]

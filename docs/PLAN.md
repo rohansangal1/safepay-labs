@@ -29,11 +29,11 @@ Vulnerability work stays confined to owned and locally run open-source software
 |---|---|---|---|
 | PIAS engine, checks, harm oracle | TypeScript, Node type stripping, zero deps | `packages/` | Built |
 | Reference checkout, fake provider | TypeScript, `node:sqlite` | `lab/emulator`, `lab/subjects/reference` | Built |
-| Payments sandbox (ledger, intents, refunds, payouts, idempotency, fault layer, admin) | Django, Postgres | `lab/sandbox/` | New |
+| Payments sandbox (ledger, intents, refunds, payouts, idempotency, fault layer, admin) | Django, Postgres | `lab/sandbox/` | v0 built (fault layer to do) |
 | Agent tool server | MCP server (Python) over the sandbox API | `lab/agents/` | New |
 | Agent runner and agent harm oracle | Python, LangChain/LangGraph, several model providers | `lab/agents/` | New |
 | Synthetic worlds, tasks, fault schedules, tool manifests | Python, seeded generator | `lab/synth/` | New |
-| Isolation | Docker + compose, one fresh stack per run, egress allowlist | `lab/docker/` | New |
+| Isolation | Docker + compose, one fresh stack per run, egress allowlist | `lab/docker/` | Sandbox + Postgres built; tool server, runner, allowlist to do |
 | Analysis | Python (uv), pandas, seeded bootstrap | `analysis/` | Built, to extend |
 | Researcher portal | FastAPI gate + static portal, Neon Postgres | `portal/`, `api/`, `site/` | Built, ingest to do |
 

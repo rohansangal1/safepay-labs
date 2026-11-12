@@ -94,8 +94,10 @@ Full rules: [docs/SAFETY.md](docs/SAFETY.md), [SECURITY.md](SECURITY.md).
 - `packages/oracle` — harm oracle (zero deps): end-to-end scenarios judged from the provider ledger
   and fulfillment records. Shares only `SubjectAdapter` with the checks; never feeds the score.
 - `lab/` — reference checkout, fake provider/signature emulator, assessment harness, seeded defects.
-  Planned for Track B (ADR 011): `lab/sandbox` (Django), `lab/agents` (MCP tools, runner, agent harm
-  oracle), `lab/synth` (generator) and `lab/docker` (compose). These form one uv workspace.
+  Track B (ADR 011), one uv workspace rooted at `lab/pyproject.toml` (`lab/uv.lock`):
+  `lab/sandbox` — Django + Postgres payments sandbox (double-entry ledger, intents, refunds,
+  payouts, idempotency, read-only admin; see its README); `lab/docker` — the compose stack (no
+  egress). Planned: `lab/agents` (MCP tools, runner, agent harm oracle), `lab/synth` (generator).
 - `scripts/` — `build-site.ts`, the daily library updater (`update-library.ts`, `library.ts`).
 - `analysis/` — Python (uv, 3.12): reads `data/runs/` and `data/library.json`; PIAS run loaders,
   cluster bootstrap, and library exploratory analysis. Reads only; never writes into `data/`.
@@ -127,6 +129,13 @@ npm run researcher -- list   # terminal fallback for portal accounts; admins nor
 npm run test:portal      # ruff + pytest for portal/ and api/
 npm run library:update   # daily related-work search (also in CI)
 npm run library:abstracts # backfill arXiv abstracts into data/library.json
+
+# Payments sandbox (Docker; lab/sandbox/README.md)
+docker compose -f lab/docker/compose.yml up --build -d --wait   # fresh stack, no ports, no egress
+docker compose -f lab/docker/compose.yml -f lab/docker/compose.inspect.yml up --build -d --wait
+                                                    # + API/admin on 127.0.0.1:8000
+docker compose -f lab/docker/compose.yml --profile test run --rm tests
+docker compose -f lab/docker/compose.yml down
 
 # Python analysis (uv)
 cd analysis

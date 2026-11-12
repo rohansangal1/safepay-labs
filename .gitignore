@@ -24,3 +24,7 @@ __pycache__/
 
 # Generated analysis reports (regenerate on demand)
 analysis/reports/
+
+# Django payments sandbox (lab/sandbox)
+.hypothesis/
+lab/sandbox/staticfiles/

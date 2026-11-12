@@ -1,0 +1,23 @@
+# Override for looking at a running sandbox from this machine: the API and the Django admin on
+# 127.0.0.1:8000 only, plus the `admin` console user.
+#
+# The sandbox stays on the internal network, with no egress. A separate `inspect` container
+# relays 127.0.0.1:8000 to it with a standard-library TCP forwarder; only that container sits on
+# a normal bridge network (Docker can't publish ports from an internal network).
+services:
+  sandbox:
+    environment:
+      SANDBOX_ADMIN_PASSWORD: ${SANDBOX_ADMIN_PASSWORD:-sandbox}
+
+  inspect:
+    image: safepay-sandbox:dev
+    entrypoint: ["python", "tools/forward.py", "8000", "sandbox:8000"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      sandbox:
+        condition: service_healthy
+    networks: [sandbox, inspect]
+
+networks:
+  inspect: {}

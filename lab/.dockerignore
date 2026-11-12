@@ -1,0 +1,12 @@
+# Build context is lab/; only the Python sandbox goes into the image.
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.hypothesis
+**/staticfiles
+emulator
+subjects
+docker
+*.ts
+package.json

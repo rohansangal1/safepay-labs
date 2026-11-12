@@ -1,0 +1,68 @@
+name: Sandbox checks
+# Django payments sandbox (lab/sandbox, ADR 011). Tests run against a real Postgres because the
+# row locks, the unique index on idempotency keys and the ledger triggers only exist there.
+on:
+  push:
+    paths:
+      - 'lab/pyproject.toml'
+      - 'lab/uv.lock'
+      - 'lab/sandbox/**'
+      - 'lab/docker/**'
+      - '.github/workflows/sandbox.yml'
+  pull_request:
+    paths:
+      - 'lab/pyproject.toml'
+      - 'lab/uv.lock'
+      - 'lab/sandbox/**'
+      - 'lab/docker/**'
+      - '.github/workflows/sandbox.yml'
+permissions:
+  contents: read
+jobs:
+  sandbox:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-bookworm@sha256:665dc7b37ac52a17e298511414c21d23ffa4e6a6ef6225b3e5d59c7afb35e994
+        env:
+          POSTGRES_USER: sandbox
+          POSTGRES_PASSWORD: sandbox
+          POSTGRES_DB: sandbox
+        ports: ['127.0.0.1:5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U sandbox" --health-interval 2s --health-timeout 3s
+          --health-retries 30
+    env:
+      SANDBOX_DATABASE_URL: postgres://sandbox:sandbox@127.0.0.1:5432/sandbox
+      HYPOTHESIS_PROFILE: ephemeral
+    defaults:
+      run:
+        working-directory: lab/sandbox
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Install uv via its official script (no third-party action to pin); the lockfile, not the
+      # uv version, fixes dependency versions.
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv python install 3.12
+      - run: uv sync --locked
+      - run: uv run ruff check
+      - run: uv run ruff format --check
+      - run: uv run python manage.py makemigrations --check --dry-run
+      - run: uv run pytest -q
+  image:
+    # The image builds and the compose stack comes up healthy with no egress.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: docker compose -f lab/docker/compose.yml up --build -d --wait
+      - run: docker compose -f lab/docker/compose.yml exec -T sandbox python manage.py ledger_check
+      - run: |
+          docker compose -f lab/docker/compose.yml exec -T sandbox python -c "
+          import socket, sys
+          try:
+              socket.create_connection(('1.1.1.1', 443), timeout=4)
+          except OSError:
+              sys.exit(0)
+          sys.exit('sandbox has network egress')"
+      - if: always()
+        run: docker compose -f lab/docker/compose.yml down
