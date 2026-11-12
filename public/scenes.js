@@ -7,7 +7,7 @@ const TAU = Math.PI * 2;
 const CREAM = '243,237,226';
 const GREY = '128,121,112';
 const WHITE = '255,255,255';
-const BLUE = '140,159,255';
+const BLUE = '183,162,217';
 const BG = '#121110';
 
 const lerp = (a, b, t) => a + (b - a) * t;

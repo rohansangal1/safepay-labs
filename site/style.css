@@ -1,4 +1,4 @@
-/* Researcher portal. Same cream, black and cobalt theme as the public landing page
+/* Researcher portal. Same cream, black and very dark purple theme as the public landing page
    (public/landing.css): serif display type over Inter, one accent. No motion here.
    Fonts come from the public /assets/ folder, which is same-origin and needs no sign-in. */
 
@@ -34,10 +34,10 @@
   --text-2: #4b453d;
   --muted: #756c61;
   --on-dark: #f3ede2;
-  /* One accent: cobalt, as on the landing page. */
-  --accent: #2846f0;
-  --accent-on-dark: #8c9fff;
-  --accent-soft: rgba(40, 70, 240, 0.1);
+  /* One accent: very dark purple, as on the landing page. */
+  --accent: #2a1145;
+  --accent-on-dark: #b7a2d9;
+  --accent-soft: rgba(42, 17, 69, 0.1);
   --grid: rgba(20, 18, 16, 0.12);
   /* Status colors carry data here, so they stay distinct hues: always paired with a text label */
   --good: #2f9a5b;
