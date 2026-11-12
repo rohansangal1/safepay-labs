@@ -4,7 +4,7 @@ The living build/research plan. [CLAUDE.md](../CLAUDE.md) has the fast orientati
 rules; this file has the direction, workstreams and timeline. Keep the "Status" markers current as
 work lands. Milestone board: [site/data/milestones.json](../site/data/milestones.json).
 
-## Direction ([ADR 007](decisions/007-rescope-architectures-and-testing-tool.md), amended by [ADR 011](decisions/011-agent-operators-django-sandbox-synthetic-data.md), proposed 2026-11-08)
+## Direction ([ADR 007](decisions/007-rescope-architectures-and-testing-tool.md), amended by [ADR 011](decisions/011-agent-operators-django-sandbox-synthetic-data.md), accepted 2026-11-12)
 **Which payment-system designs prevent money-level harm when the party on the other side
 misbehaves?** Two tracks share one harm-oracle approach, one evidence format, one portal and one
 safety boundary:
@@ -43,15 +43,15 @@ The Python projects under `lab/` form one uv workspace with a committed `uv.lock
 ## Prerequisites — status
 - [x] Phase 0 merged to `main` (restructure, CI, reference checkout, site, library job).
 - [x] Python analysis env on `main`; library exploratory analysis on `main`.
-- [ ] Merge `feat/harm-oracle`, then this rescope branch.
-- [ ] Accept ADR 011 (change its status to Accepted when merging).
-- [ ] arXiv abstract backfill (`feat/library-abstracts`) — commit/merge.
+- [x] Merge `feat/harm-oracle`, then the rescope branch (PRs #19, #24).
+- [x] Accept ADR 011 (2026-11-12).
+- [x] arXiv abstract backfill (`feat/library-abstracts`) merged.
 - [ ] GitHub settings: Actions may open PRs; branch protection on `main`; private vuln reporting;
       secret scanning + push protection; Dependabot.
 - [ ] Vercel: connect the GitHub repo for per-PR previews (project already created, SSO-protected).
-- [ ] Widen `pytest` pin in `analysis/pyproject.toml` to accept the Dependabot bump.
-- [ ] Docker Desktop (or another container runtime) installed locally; model API keys in a
-      git-ignored `.env` with a spend cap set on each provider account.
+- [x] Dependabot pytest 9 bump merged.
+- [x] Docker Desktop installed locally.
+- [ ] Model API keys in a git-ignored `.env` with a spend cap set on each provider account.
 
 ## Workstreams
 **A — Python analysis env.** DONE (`analysis/`: loaders + schema guard, cluster bootstrap, library

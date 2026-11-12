@@ -1,6 +1,6 @@
 # 011. Add a second track: LLM agents operating payment tools, in a Django sandbox with synthetic data
 
-- **Status:** Proposed, 2026-11-08
+- **Status:** Accepted, 2026-11-12 (proposed 2026-11-08)
 - **Amends:** [007](007-rescope-architectures-and-testing-tool.md) (adds Track B and changes the order of work) and [003](003-dependencies-and-layout.md) (Python with pinned dependencies under `lab/`, Docker images).
 
 ## Context

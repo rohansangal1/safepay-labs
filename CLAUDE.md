@@ -38,7 +38,7 @@ harm.** Primary subject = owned **architecture variants**, plus open-source shop
 - **After the research:** an open-source tool for end-to-end payment testing without real card data.
 - **ML:** wanted, undefined; build nothing for it until a concrete use is written down.
 
-### Amended by [ADR 011](docs/decisions/011-agent-operators-django-sandbox-synthetic-data.md) (proposed 2026-11-08): Track B first
+### Amended by [ADR 011](docs/decisions/011-agent-operators-django-sandbox-synthetic-data.md) (accepted 2026-11-12): Track B first
 - **Agents as operators.** Agents call payment tools at run time. Coding agents stay a literature
   review.
 - **Stack for Track B:**
@@ -137,36 +137,27 @@ uv run python -m piaslab.library_report   # → analysis/reports/library/ (git-i
 ```
 
 ## Current state (update this as work lands)
-- **Phase 0 done and on `main`:** TS restructure, CI, reference checkout (sqlite + outbox),
-  static site, daily library job.
-- **On `main`:** Python analysis env (loaders, cluster bootstrap), library exploratory analysis.
-- **On branch `feat/public-landing-researcher-portal`:** public landing page + researcher-only portal
-  (ADR 008). Before it works in production: accept Neon's marketplace terms and provision the
-  database, run `npm run researcher -- init`, and open production in Deployment Protection.
-- **In flight:** arXiv abstract backfill (`feat/library-abstracts`); Phase 1 SubjectAdapter
-  (`phase-1-subject-adapter`); a Dependabot pytest bump (widen the `pytest<9` pin in
-  `analysis/pyproject.toml` to accept it).
-- **On `main`:** evidence schema v1 ([ADR 009](docs/decisions/009-evidence-schema-v1.md),
-  `packages/checks/src/evidence.ts`); ADR 007 accepted and the research plan, roadmap and portal
-  headline rewritten for it; CodeQL workflow removed.
-- **On `main` (PR #17):** lifecycle and recovery checks (24 checks across 8
-  controls, 11 seeded defects). The reference checkout handles full refunds and reconciles dropped
-  events; `SubjectAdapter` gained `activeFulfillments` and optional `faults`.
-- **On `main` (PR #18):** secrets, data-minimization and audit checks (30
-  checks across 11 controls, 17 seeded defects; coverage 95). `SubjectAdapter` gained optional
-  `artifacts` (secrets, responses, logs, stored rows, audit trail); the reference checkout writes a
-  log and an `audit` table; evidence schema 1.1 adds two oracles ([ADR 010](docs/decisions/010-evidence-schema-1-1-artifact-oracles.md)).
-  Milestone 7 is then done apart from browser integrity (needs the browser harness).
-- **On branch `feat/harm-oracle`:** harm oracle (`packages/oracle`, 12 scenarios, `npm run harm`).
-  `SubjectAdapter` gained optional `ledger`; the fake provider's ledger records captures and refunds.
-  Harm results are not in the portal or the Python loaders yet.
-- **On branch `docs/agent-operators-rescope` (stacked on `feat/harm-oracle`):** ADR 011 (proposed).
-  It adds Track B and runs it first; PLAN, RESEARCH_PLAN (draft 0.4), the roadmap (milestones
-  27–38 added; phases renumbered; browser harness parked), SAFETY, LITERATURE, DATA_AND_TOOLS,
-  README and this file were updated with it.
+- **On `main` (Phases 0–1):** TS restructure, CI, reference checkout (sqlite + outbox), daily
+  library job with arXiv abstracts, Python analysis env (loaders, cluster bootstrap, library
+  analysis), `SubjectAdapter`, evidence schema v1 ([ADR 009](docs/decisions/009-evidence-schema-v1.md)).
+- **On `main` (checks):** 30 checks across 11 controls, 17 seeded defects, coverage 95 (PRs #17,
+  #18). The reference checkout handles full refunds, reconciles dropped events, writes a log and an
+  `audit` table. `SubjectAdapter` has optional `faults`, `artifacts` and `ledger`; evidence schema
+  1.1 adds two oracles ([ADR 010](docs/decisions/010-evidence-schema-1-1-artifact-oracles.md)).
+  Milestone 7 is done apart from browser integrity (parked with the browser harness).
+- **On `main` (PR #19):** harm oracle (`packages/oracle`, 12 scenarios, `npm run harm`). Harm
+  results are not in the portal or the Python loaders yet.
+- **On `main` (PR #24):** ADR 011 (accepted 2026-11-12) adds Track B and runs it first; PLAN,
+  RESEARCH_PLAN (draft 0.4), roadmap (milestones 27–38), SAFETY, LITERATURE and DATA_AND_TOOLS
+  follow it.
+- **On `main` (PR #25 and earlier):** public landing page (SafePay Labs, mission refresh) and the
+  researcher-only portal ([ADR 008](docs/decisions/008-public-landing-and-researcher-portal.md)).
+  Before the portal works in production: provision Neon, run `npm run researcher -- init`, and open
+  production in Deployment Protection.
+- **In flight:** reading notes and reproduction of Faghih et al. (milestone 31, `docs/reading/`);
+  Google sign-in for the portal (`feat/portal-google-signin`).
 - **Next (Phase 2, Track B):**
-  - week 0: reproduce one Faghih et al. result (milestone 31);
-  - then the Docker stack and Django ledger service (27–28);
+  - the Docker stack and Django ledger service (milestones 27–28);
   - then the fault layer and control API (29) and the synthetic generator (30);
   - then the tool server, the runner and the agent harm oracle (32–34), and the B1 pilot (35).
 

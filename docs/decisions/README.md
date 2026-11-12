@@ -14,4 +14,4 @@ Short records of decisions that shape the project. Add a new numbered file when 
 | [008](008-public-landing-and-researcher-portal.md) | Public landing page and researcher-only portal | Accepted |
 | [009](009-evidence-schema-v1.md) | Evidence schema v1 | Accepted |
 | [010](010-evidence-schema-1-1-artifact-oracles.md) | Evidence schema 1.1: oracles for retained artifacts and the audit trail | Accepted |
-| [011](011-agent-operators-django-sandbox-synthetic-data.md) | Second track: LLM agents operating payment tools, in a Django sandbox with synthetic data | Proposed |
+| [011](011-agent-operators-django-sandbox-synthetic-data.md) | Second track: LLM agents operating payment tools, in a Django sandbox with synthetic data | Accepted |
